@@ -1,0 +1,122 @@
+I. Installation instructions
+
+1. Install Erlang/OTP. 
+
+2. Unpack the contents of openpoker.tgz into a directory 
+and switch to that directory. Retrieve http://wagerlabs.com/ircdb.dat.gz and unpack it into src/ under the installation directory. Switch to the src/ directory.
+
+3. Pick a name for your Mnesia Master node. Lets assume master1. Recompile your files.
+
+erl -make
+
+4. Figure out your fully qualified host name. You can get this 
+by running hostname on Unix.
+
+5. Run the following sequence from the src directory:
+
+erl -sname master1
+schema:install([node()]).
+halt().
+
+Note that the dots (.) at the end of the install and halt commands are required!
+
+My scenario looks like this:
+
+bigdaddy:/tmp/release joelr$ erl -sname master1
+Erlang (BEAM) emulator version 5.4.6 [source] [hipe] [threads:0]
+
+Eshell V5.4.6  (abort with ^G)
+(master1@bigdaddy)1> schema:install([node()]).
+ok
+(master1@bigdaddy)2> halt().
+
+6. Make sure a directory called Mnesia.master1@... has been created.
+
+In my case:
+
+bigdaddy:/tmp/release joelr$ ls Mnesia.master1\@bigdaddy/
+LATEST.LOG              game_history.DCD        player_data.DCD
+cluster_config.DCD      game_xref.DCD           schema.DAT
+game_config.DCD         player.DCD
+bigdaddy:/tmp/release joelr$ 
+
+7. Start the test harness. The test scenario assumes that the gateway will run on port 3000 and the game server will run on port 2000. The argument to setup is the host name of the computer where the game server is running. This host name should resolve so that poker clients can connect to it.
+
+In my case:
+
+erl -sname master1 -s mnesia start
+
+then
+
+(master@bigdaddy)1> test:all().
+
+Note that the following is -not- an error!
+
+=ERROR REPORT==== 3-Apr-2011::20:57:40 ===
+    message: "Player timeout!"
+    module: blinds
+    line: 221
+    state: big_blind
+    player: <0.872.0>
+    seat: 2
+    now: {1301,857060,796038}
+test: leave_after_sb_posted_test...*timed out*
+undefined
+=======================================================
+  Failed: 0.  Skipped: 0.  Passed: 25.
+  ^^^ 
+The above should show no failed tests.
+
+8. Running distributed tests
+
+ulimit -n 1024
+
+erl -sname dmb -s mnesia start
+Erlang R14B03 (erts-5.8.4) [source] [smp:4:4] [rq:4] [async-threads:0] [hipe] [kernel-poll:false]
+
+Eshell V5.8.4  (abort with ^G)
+(dmb@biggie)1> dmb:setup().
+
+=INFO REPORT==== 3-Apr-2011::22:25:49 ===
+    application: mnesia
+    exited: stopped
+    type: temporary
+
+=ERROR REPORT==== 3-Apr-2011::22:25:50 ===
+Mnesia(dmb@biggie): ** WARNING ** Mnesia is overloaded: {dump_log,
+                                                         write_threshold}
+
+^^^ ignore these
+
+(dmb@biggie)2> dmb:run(100, 1, 1).
+game1@biggie: game server on port 3001
+game1@biggie: port server on 3001...
+cluster: [bot1@biggie,game1@biggie]
+bot launchers  : [<9617.63.0>]
+game launchers : [<9692.231.0>]
+game servers   : [<9692.68.0>]
+gateway:start(dmb@biggie, 4000, 500000)
+Waiting for game servers...
+dmb@biggie: port server on 4000...
+Simulating gameplay with 100 games...
+50 games started, 262 players
+100 games started, 504 players
+dmb: 100 games will be launching simultaneously
+dmb: waiting for games to end...
+barrier: reached target of 100
+50 games finished
+100 games finished
+dmb: exited successfully, 32.597982 seconds elapsed
+ok
+
+9. Limitations of the default build of the Erlang VM
+
+You will likely get the following error if you try to run significantly more than 100 games:
+
+=ERROR REPORT==== 3-Apr-2011::21:15:04 ===
+driver_select(0x000001ed, 1024, ERL_DRV_READ ERL_DRV_USE, 1) by tcp_inet driver #Port<0.3565> failed: fd=1024 is larger than the largest allowed fd=1023
+
+The Erlang VM hardwires the definition of FD_SETSIZE even when using epoll, kqueue, etc. To test a significantly higher number of games you need to both up 'ulimit -n 10240' and recompile Erlang after changing the value of FD_SETSIZE in your system headders if you get the above error. 
+
+FD_SETSIZE defaults to 1024 on Mac OSX, for example, and I would change it to 10240.
+
