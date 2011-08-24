@@ -7,7 +7,7 @@
 %%
 -module(mochiweb_websocket).
 
--export([start/0, start/1, stop/0, stop/1]).
+-export([start/3, stop/1]).
 -export([loop/2, default_hello/1]).
 
 -export([generate_websocket_accept/1]).
@@ -25,6 +25,7 @@ set_default({Prop, Value}, PropList) ->
       [{Prop, Value} | PropList]
   end.
 
+
 set_defaults(Defaults, PropList) ->
   lists:foldl(fun set_default/2, PropList, Defaults).
 
@@ -36,22 +37,19 @@ parse_options(Options) ->
   Options1 = [{loop, Loop} | proplists:delete(loop, Options)],
   set_defaults(?DEFAULTS, Options1).
 
-stop() ->
-  io:format("mochiweb_websocket stop"),
-  mochiweb_socket_server:stop(?MODULE).
+start(Host, Port, Loop) ->
+  start([{ip, Host}, {loop, Loop}, {port, Port}, {name, port_name(Port)}]).
 
-stop(Name) ->
+stop(Port) ->
+  Name = port_name(Port),
   io:format("mochiweb_websocket stop ~p~n", [Name]),
   mochiweb_socket_server:stop(Name).
 
-start() ->
-  start([{ip, "127.0.0.1"},
-      {loop, {?MODULE, default_hello}}]).
-
 start(Options) ->
-  io:format("mochi_websocket starting"),
-  mochiweb_socket_server:start(parse_options(Options)),
-  io:format("mochi_websocket starting").
+  mochiweb_socket_server:start(parse_options(Options)).
+
+port_name(Port) when is_integer(Port) ->
+    list_to_atom("portServer" ++ integer_to_list(Port)).
 
 %% Default loop if you start the server with 'start()'
 default_hello(WebSocket) ->
@@ -84,10 +82,7 @@ check_header(Socket,Path,Headers,MyLoop) ->
     {ok, http_eoh} ->
       verify_handshake(Socket,Path,Headers),
       %% Set packet back to raw for the rest of the connection
-      error_logger:info_report("verify_handshake over"),
       inet:setopts(Socket, [{packet, raw}]),
-      error_logger:info_report("inet:setopts over"),
-      error_logger:info_report([Socket, MyLoop]),
       request(Socket,MyLoop);
     {ok, {http_header, _, Name, _, Value}} ->
       check_header(Socket, Path, [{Name, Value} | Headers],MyLoop);
@@ -108,7 +103,7 @@ verify_handshake(Socket,Path,Headers) ->
       exit(normal)
   end.
 
-send_handshake(Socket,Path,Headers) ->
+send_handshake(Socket, _Path,Headers) ->
   Key = get_header(Headers, "Sec-Websocket-Key"),
   Protocol = get_header(Headers, "Sec-Websocket-Protocol"),
   %Origin = get_header(Headers, "Sec-Websocket-Origin"),
@@ -117,12 +112,11 @@ send_handshake(Socket,Path,Headers) ->
   Resp = ?WEBSOCKET_PREFIX ++
   "Sec-WebSocket-Accept: " ++ Accept ++ "\r\n" ++
   "Sec-WebSocket-Protocol: " ++ Protocol ++ "\r\n\r\n" ,
-  gen_tcp:send(Socket, Resp),
-  error_logger:info_report(Resp).
+  gen_tcp:send(Socket, Resp).
 
 generate_websocket_accept(Key) ->
-  UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11", % genuuid(),
-  base64:encode_to_string(crypto:sha(Key ++ UUID)).
+  base64:encode_to_string(crypto:sha(
+    Key ++ "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")).
 
 get_header([{Key, Val}|T], FindKey) when is_list(Key) ->
   case string:to_lower(Key) == string:to_lower(FindKey) of
@@ -136,18 +130,6 @@ get_header([_H|T], FindKey) ->
 get_header([], _FindKey) ->
   ok.
 
-genuuid() ->
-  genuuid(os:cmd("uuidgen"), []).
-
-genuuid([_H|[]], Result) ->
-  Result;
-
-genuuid([H|T], Result) ->
-  genuuid(T, [H|Result]).
-
 request(Socket, MyLoop) ->
   WebSocketRequest = websocket_request:new(Socket),
-  error_logger:info_report("In request"),
-  error_logger:info_report(WebSocketRequest),
-  MyLoop(WebSocketRequest),
-  request(Socket,MyLoop).
+  MyLoop(WebSocketRequest).
