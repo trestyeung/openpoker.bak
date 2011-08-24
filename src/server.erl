@@ -104,9 +104,9 @@ init([Host, Port, TestMode]) ->
         true ->
             ok
     end,
-    F = fun(Sock) -> parse_packet(Sock, Client) end, 
-    tcp_server:stop(Port),
-    {ok, _} = tcp_server:start_raw_server(Port, F, 32768, 32768),
+    F = fun(WebSock) -> parse_packet(WebSock, Client) end, 
+    mochiweb_websocket:stop(Port),
+    {ok, _} = mochiweb_websocket:start("127.0.0.1", Port, F),
     Server = #server{
       host = Host,
       port = Port,
@@ -119,7 +119,7 @@ stop(Server) ->
 
 terminate(normal, Server) ->
     kill_games(),
-    tcp_server:stop(Server#server.port),
+    mochiweb_websocket:stop(Server#server.port),
     ok.
 
 handle_cast({'BUMP', _Size}, Server) ->
@@ -240,59 +240,59 @@ process_game_query(Client, Socket, Q)
     Client.
 
 process_event(Client, _Socket, Event) ->
-    if 
-        Client#client.player == none ->
-            %% start a proxy
-            {ok, Visitor} = visitor:start(self()),
-            Client1 = Client#client{ player = Visitor };
-        true ->
-            Client1 = Client
-    end,
-    gen_server:cast(Client1#client.player, Event),
-    Client1.
+  if 
+    Client#client.player == none ->
+      %% start a proxy
+      {ok, Visitor} = visitor:start(self()),
+      Client1 = Client#client{ player = Visitor };
+    true ->
+      Client1 = Client
+  end,
+  gen_server:cast(Client1#client.player, Event),
+  Client1.
 
-parse_packet(Socket, Client) ->
-  io:format("RCVing ~n"),
-    receive
-        {tcp, Socket, Bin} ->
-            io:format("RCV ~p~n", [Bin]),
-            gen_server:cast(Client#client.server, {'BUMP', size(Bin)}),
-            Client1 = case catch pp:read(Bin) of
-                          {'EXIT', Error} ->
-                              error_logger:error_report(
-                                [{module, ?MODULE},
-                                 {line, ?LINE},
-                                 {message, "Could not parse command"},
-                                 {Bin, Bin},
-                                 {error, Error},
-                                 {now, now()}]),
-                              Client;
-                          #login{ nick = Nick, pass = Pass} ->
-                              process_login(Client, Socket, Nick, Pass);
-                          #logout{} ->
-                              process_logout(Client, Socket);
-                          R = #ping{} ->
-                              process_ping(Client, Socket, R);
-                          R = #pong{} ->
-                              process_pong(Client, Socket, R);
-                          R = #start_game{ rigged_deck = [_|_] } ->
-                              process_test_start_game(Client, Socket, R);
-                          R when is_record(R, game_query) ->
-                              process_game_query(Client, Socket, R);
-                          Event ->
-                              process_event(Client, Socket, Event)
-                      end,
-            parse_packet(Socket, Client1);
-        {tcp_closed, Socket} ->
-            gen_server:cast(Client#client.player, 'DISCONNECT');
-        {packet, Packet} ->
-            ok = ?tcpsend(Socket, Packet),
-            parse_packet(Socket, Client);
-          Other ->
-            io:format("Other ~p~n", [Other]),
-            parse_packet(Socket, Client) 
-
-    end.
+parse_packet(WebSocket, Client) ->
+  case WebSocket:get_data() of
+    {tcp, Socket, Bin} ->
+      ?LOG([{parse_packet, Bin}]),
+      Client1 = Client,
+      %gen_server:cast(Client#client.server, {'BUMP', size(Bin)}), {{{
+      %Client1 = case catch pp:read(Bin) of
+        %{'EXIT', Error} ->
+          %error_logger:error_report(
+            %[{module, ?MODULE},
+              %{line, ?LINE},
+              %{message, "Could not parse command"},
+              %{Bin, Bin},
+              %{error, Error},
+              %{now, now()}]),
+          %Client;
+        %#login{ nick = Nick, pass = Pass} ->
+          %process_login(Client, Socket, Nick, Pass);
+        %#logout{} ->
+          %process_logout(Client, Socket);
+        %R = #ping{} ->
+          %process_ping(Client, Socket, R);
+        %R = #pong{} ->
+          %process_pong(Client, Socket, R);
+        %R = #start_game{ rigged_deck = [_|_] } ->
+          %process_test_start_game(Client, Socket, R);
+        %R when is_record(R, game_query) ->
+          %process_game_query(Client, Socket, R);
+        %Event ->
+          %process_event(Client, Socket, Event)
+          %end, }}}
+      parse_packet(WebSocket, Client1);
+    {tcp_closed} ->
+      ?LOG([{tcp_closed}]);
+      %gen_server:cast(Client#client.player, 'DISCONNECT');
+    {packet, Packet} ->
+      %ok = ?tcpsend(Socket, Packet),
+      parse_packet(WebSocket, Client);
+    Other ->
+      io:format("Other ~p~n", [Other]),
+      parse_packet(WebSocket, Client) 
+  end.
 
 %%%
 %%% Handlers
@@ -366,3 +366,5 @@ start_test_game(R) ->
 
 test() ->
     ok.
+
+%% vim: fdm=marker

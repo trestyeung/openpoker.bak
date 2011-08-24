@@ -1,5 +1,7 @@
 %%% Copyright (C) 2005-2008 Wager Labs, SA
 
+-define(LOG(L), error_logger:info_report([{module, ?MODULE}, {line, ?LINE},L])).
+
 %%% 
 
 -define(MAX_RAISES, 3).

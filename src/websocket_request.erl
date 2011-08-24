@@ -14,10 +14,18 @@ get(socket) ->
 get_data() ->
   case gen_tcp:recv(Socket, 0) of
     {ok, Data} ->
-      Data1 = parse_data(Data),
-      base64:decode(Data1);
-    _Other ->
-      exit(normal)
+      case parse_data(Data) of
+        {tcp_closed} ->
+          ?LOG([{close_handshake}]),
+          {tcp_closed};
+        NewData ->
+          {tcp, Socket, base64:decode(NewData)}
+      end;
+    {error, closed} ->
+      {tcp_closed};
+    {error, Reason} ->
+      ?LOG([{error, Reason}]),
+      {error, Reason}
     end.
 
 send(Data) ->
@@ -25,6 +33,9 @@ send(Data) ->
   send(Data1, size(Data1)).
 
 %% Inner Function 
+parse_data(<<_Fin:1, _Rsv:3, 8:4, _/binary>>) ->
+  {tcp_closed};
+
 parse_data(<<_Fin:1, _Rsv:3, _Opcode:4, _Mask:1, 126:7, _Size:16, MaskKey:32, Msg/binary>>) ->
   unmask_data(binary_to_list(Msg), <<MaskKey:32>>, 4, []);
 
