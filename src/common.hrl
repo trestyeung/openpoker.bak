@@ -1,6 +1,6 @@
 %%% Copyright (C) 2005-2008 Wager Labs, SA
 
--define(LOG(L), error_logger:info_report([{module, ?MODULE}, {line, ?LINE},L])).
+-define(LOG(L), error_logger:info_report([{debug, {module, ?MODULE}, {line, ?LINE}, {self, self()}},L])).
 
 %%% 
 

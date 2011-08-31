@@ -74,11 +74,14 @@ terminate(_Reason, Data) ->
     ok = db:delete(tab_player, Data#pdata.pid).
 
 handle_cast('DISCONNECT', Data) ->
-    {noreply, Data};
+  ?LOG([{player, self()}, {disconnect}]),
+  {noreply, Data};
 
 handle_cast({'SOCKET', Socket}, Data) ->
-    Data1 = Data#pdata{ socket = Socket },
-    {noreply, Data1};
+  %% Socket 对应此Player的Socket进程
+  %% 为Player进程设置Socket进程标识(WebSocket进程)
+  Data1 = Data#pdata{ socket = Socket },
+  {noreply, Data1};
 
 handle_cast(R = #notify_join{}, Data) ->
     Game = R#notify_join.proc,
@@ -189,18 +192,21 @@ handle_cast(#seat_query{ game = Game }, Data) ->
     {noreply, Data};
 
 handle_cast(#player_query{ player = PID }, Data) ->
-    case db:read(tab_player_info, PID) of
-        [Info] ->
-            handle_cast(_ = #player_info{
-                          player = self(),
-                          total_inplay = inplay(Data),
-                          nick = Info#tab_player_info.nick,
-                          location = Info#tab_player_info.location
-                         }, Data);
-        _ ->
-            oops
-    end,
-    {noreply, Data};
+  %?LOG([{player_query, player, PID}, {loop_data, Data}]),
+  case db:read(tab_player_info, PID) of
+    [Info] ->
+      %?LOG([{db_read_player_info, Info}]),
+      handle_cast(_ = #player_info{
+          player = self(),
+          total_inplay = inplay(Data),
+          nick = Info#tab_player_info.nick,
+          location = Info#tab_player_info.location
+        }, Data);
+    _ ->
+      ?LOG([{db_read_player_info, oops}]),
+      oops
+  end,
+  {noreply, Data};
 
 handle_cast(R = #start_game{}, Data) ->
     [CC] = db:read(tab_cluster_config, 0),
@@ -235,6 +241,7 @@ handle_cast(#balance_query{}, Data) ->
 handle_cast(R, Data)
   when is_record(R, seat_state);
 is_record(R, bet_req);
+is_record(R, player_info);
 is_record(R, game_stage);
 is_record(R, notify_start_game);
 is_record(R, notify_end_game);
@@ -251,8 +258,9 @@ is_record(R, show_cards);
 is_record(R, notify_button);
 is_record(R, notify_sb);
 is_record(R, notify_bb) ->
-    forward_to_client(R, Data),
-    {noreply, Data};
+  %?LOG([{forward_to_client, R, Data}]),
+  forward_to_client(R, Data),
+  {noreply, Data};
 
 handle_cast(stop, Data) ->
     {stop, normal, Data};
@@ -261,12 +269,8 @@ handle_cast({stop, Reason}, Data) ->
     {stop, Reason, Data};
 
 handle_cast(Event, Data) ->
-    error_logger:info_report([{module, ?MODULE}, 
-                              {line, ?LINE},
-                              {self, self()}, 
-                              {message, Event}
-                             ]),    
-    {noreply, Data}.
+  ?LOG([{unknown_event, {self, self()}, {event, Event}}]),
+  {noreply, Data}.
 
 handle_call('ID', _From, Data) ->
     {reply, Data#pdata.pid, Data};
@@ -390,10 +394,11 @@ leave_games(Data, [Game|Rest]) ->
 %%     db:update_balance(tab_balance, PID, Amount).
 
 forward_to_client(Event, Data) ->    
-    if 
-        Data#pdata.socket /= none ->
-            Data#pdata.socket ! {packet, Event};
-        true ->
-            ok
-    end.
+  if 
+    Data#pdata.socket /= none ->
+      ?LOG([{forward_to_client, {socket, Data#pdata.socket}, {event, Event}, {data, Data}}]),
+      Data#pdata.socket ! {packet, Event};
+    true ->
+      ok
+  end.
 

@@ -799,10 +799,7 @@ read(<<?CMD_GOOD, Bin/binary>>) ->
     unpickle(good(), Bin);
 
 read(<<?CMD_LOGIN, Bin/binary>>) ->
-  io:format("CMD_LOGIN~n"),
-  T = unpickle(login(), Bin),
-  io:format("CMD_LOGIN ~p~n", [T]),
-  T;
+  unpickle(login(), Bin);
 
 read(<<?CMD_LOGOUT, Bin/binary>>) ->
     unpickle(logout(), Bin);
@@ -856,7 +853,7 @@ read(<<?CMD_SEAT_QUERY, Bin/binary>>) ->
     unpickle(seat_query(), Bin);
 
 read(<<?CMD_PLAYER_QUERY, Bin/binary>>) ->
-    unpickle(player_query(), Bin);
+  unpickle(player_query(), Bin);
 
 read(<<?CMD_BALANCE_QUERY, Bin/binary>>) ->
     unpickle(balance_query(), Bin);
@@ -957,29 +954,30 @@ read(<<?CMD_PING, Bin/binary>>) ->
 read(<<?CMD_PONG, Bin/binary>>) ->
     unpickle(pong(), Bin).
 
-send(Socket, Data, Ping) ->
-    Bin = list_to_binary(write(Data)),
-    %%io:format("SND ~p~n", [Bin]),
-    case catch gen_tcp:send(Socket, Bin) of
-        ok ->
-            ok;
-        {error, closed} ->
-            ok;
-        {error,econnaborted} ->
-            ok;
-        Any ->
-            error_logger:error_report([
-                                       {message, "gen_tcp:send error"},
-                                       {module, ?MODULE}, 
-                                       {line, ?LINE},
-                                       {socket, Socket}, 
-                                       {port_info, erlang:port_info(Socket, connected)},
-                                       {data, Data},
-                                       {bin, Bin},
-                                       {error, Any}
-                                      ])
-    end.
-    %%ping(Socket, size(Bin), Ping).
+send(Socket, Data, _Ping) ->
+  Bin = list_to_binary(write(Data)),
+  ?LOG([{socket_send, {bin, Bin}}]),
+  %%io:format("SND ~p~n", [Bin]),
+  case catch gen_tcp:send(Socket, websocket:encoding(Bin)) of
+    ok ->
+      ok;
+    {error, closed} ->
+      ok;
+    {error, econnaborted} ->
+      ok;
+    Any ->
+      error_logger:error_report([
+          {message, "gen_tcp:send error"},
+          {module, ?MODULE}, 
+          {line, ?LINE},
+          {socket, Socket}, 
+          {port_info, erlang:port_info(Socket, connected)},
+          {data, Data},
+          {bin, Bin},
+          {error, Any}
+        ])
+  end.
+%%ping(Socket, size(Bin), Ping).
 
 ping(_, _, false) ->
     ok;

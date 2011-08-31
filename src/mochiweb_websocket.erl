@@ -12,6 +12,8 @@
 
 -export([generate_websocket_accept/1]).
 
+-include("common.hrl").
+
 -define(DEFAULTS, [{name, ?MODULE},
     {port, 8002}]).
 
@@ -82,8 +84,8 @@ check_header(Socket,Path,Headers,MyLoop) ->
     {ok, http_eoh} ->
       verify_handshake(Socket,Path,Headers),
       %% Set packet back to raw for the rest of the connection
-      inet:setopts(Socket, [{packet, raw}]),
-      request(Socket,MyLoop);
+      inet:setopts(Socket, [{packet, raw}, {active, true}]),
+      request(Socket, MyLoop, none);
     {ok, {http_header, _, Name, _, Value}} ->
       check_header(Socket, Path, [{Name, Value} | Headers],MyLoop);
     _Other ->
@@ -92,8 +94,7 @@ check_header(Socket,Path,Headers,MyLoop) ->
   end.
 
 verify_handshake(Socket,Path,Headers) ->
-  error_logger:info_msg("Incoming Headers: ~p~n",[Headers]),
-
+  ?LOG([{websocket_handshake, {headers, Headers}}]),
   case string:to_lower(proplists:get_value('Upgrade',Headers)) of
     "websocket" ->
       send_handshake(Socket,Path,Headers);
@@ -130,6 +131,19 @@ get_header([_H|T], FindKey) ->
 get_header([], _FindKey) ->
   ok.
 
-request(Socket, MyLoop) ->
-  WebSocketRequest = websocket_request:new(Socket),
-  MyLoop(WebSocketRequest).
+request(Socket, MyLoop, LoopData) ->
+  R = receive
+    {tcp, Socket, Bin} ->
+      Bin1 = websocket:decoding(Bin),
+      {socket, Bin1};
+    {tcp_closed, Socket} ->
+      tcp_closed;
+    {packet, Packet} ->
+      {packet, Packet}
+  end,
+
+  ?LOG([{websocket, {request, R}}]),
+  LoopData1 = MyLoop(Socket, R, LoopData),
+  request(Socket, MyLoop, LoopData1).
+  %WebSocketRequest = websocket_request:new(Socket),
+  %MyLoop(WebSocketRequest).

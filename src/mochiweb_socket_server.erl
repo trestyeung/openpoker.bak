@@ -14,6 +14,8 @@
 
 -export([acceptor_loop/1]).
 
+-include("common.hrl").
+
 -record(mochiweb_socket_server,
   {port,
     loop,
@@ -105,6 +107,7 @@ ipv6_supported() ->
   end.
 
 init(State=#mochiweb_socket_server{ip=Ip, port=Port, backlog=Backlog}) ->
+  ?LOG([{mochiweb_socket_server, {init, {self, self()}, {ip, Ip}, {port, Port}}}]),
   process_flag(trap_exit, true),
   BaseOpts = [binary,
     {reuseaddr, true},
@@ -170,6 +173,7 @@ call_loop(Loop, Socket) ->
   Loop(Socket).
 
 acceptor_loop({Server, Listen, Loop}) ->
+  ?LOG([{acceptor_loop, {self, self()}}]),
   case catch gen_tcp:accept(Listen) of
     {ok, Socket} ->
       gen_server:cast(Server, {accepted, self()}),
@@ -243,6 +247,8 @@ handle_info({'EXIT', _LoopPid, Reason},
       State1
   end,
   {noreply, State2};
+
 handle_info(Info, State) ->
+  ?LOG([{websocket, {handle_info, Info}}]),
   error_logger:info_report([{'INFO', Info}, {'State', State}]),
   {noreply, State}.

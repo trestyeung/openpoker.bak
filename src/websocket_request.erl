@@ -28,9 +28,11 @@ get_data() ->
       {error, Reason}
     end.
 
+
 send(Data) ->
   Data1 = base64:encode(Data),
-  send(Data1, size(Data1)).
+  send(Data1, size(Data1)),
+  ok.
 
 %% Inner Function 
 parse_data(<<_Fin:1, _Rsv:3, 8:4, _/binary>>) ->
