@@ -56,6 +56,8 @@ start(Nick)
             {error, Any}
     end.
 
+  %% 初始化Player的时候,使用的是从tab_player_info中查询出来的ID
+  %% 此ID为Integer类型，初始化函数也明确指明了类型，但为什么后续却又使用了pid类型的PID呢？
 init([PID]) 
   when is_integer(PID) ->
     process_flag(trap_exit, true),
@@ -191,13 +193,18 @@ handle_cast(#seat_query{ game = Game }, Data) ->
     lists:foreach(F, L),
     {noreply, Data};
 
-handle_cast(#player_query{ player = PID }, Data) ->
-  %?LOG([{player_query, player, PID}, {loop_data, Data}]),
+handle_cast(#player_query{ player = Pid }, Data) ->
+  ?LOG([{player_query, player, Pid}, {loop_data, Data}]),
+  PID = case self() == Pid of
+    true ->
+      Data#pdata.pid;
+    _ ->
+      gen_server:call(Pid, 'ID')
+  end,
   case db:read(tab_player_info, PID) of
     [Info] ->
-      %?LOG([{db_read_player_info, Info}]),
       handle_cast(_ = #player_info{
-          player = self(),
+          player = PID,
           total_inplay = inplay(Data),
           nick = Info#tab_player_info.nick,
           location = Info#tab_player_info.location
@@ -266,10 +273,10 @@ handle_cast(stop, Data) ->
     {stop, normal, Data};
 
 handle_cast({stop, Reason}, Data) ->
-    {stop, Reason, Data};
+  {stop, Reason, Data};
 
 handle_cast(Event, Data) ->
-  ?LOG([{unknown_event, {self, self()}, {event, Event}}]),
+  ?LOG([{player_unkonw_cast, {event, Event}}]),
   {noreply, Data}.
 
 handle_call('ID', _From, Data) ->
@@ -282,27 +289,19 @@ handle_call('GAMES', _From, Data) ->
     {reply, gb_trees:keys(Data#pdata.playing), Data};
 
 handle_call(Event, From, Data) ->
-    error_logger:info_report([{module, ?MODULE}, 
-                              {line, ?LINE},
-                              {self, self()}, 
-                              {message, Event}, 
-                              {from, From}
-                             ]),
-    {noreply, Data}.
+  ?LOG([{player_unkonw_event, {event, Event}, {from, From}}]),
+  {noreply, Data}.
 
 handle_info({'EXIT', _Pid, _Reason}, Data) ->
     %% child exit?
     {noreply, Data};
 
 handle_info(Info, Data) ->
-    error_logger:info_report([{module, ?MODULE}, 
-                              {line, ?LINE},
-                              {self, self()}, 
-                              {message, Info}]),
-    {noreply, Data}.
+  ?LOG([{player_unkonw_info, {info, Info}}]),
+  {noreply, Data}.
 
 code_change(_OldVsn, Data, _Extra) ->
-    {ok, Data}.
+  {ok, Data}.
 
 %%%
 %%% Utility

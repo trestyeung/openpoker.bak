@@ -265,13 +265,11 @@ parse_packet(_Socket, tcp_closed, Client) ->
 
 parse_packet(Socket, {packet, Packet}, Client) ->
   ?LOG([{parse_packet, {packet, Packet}}]),
-  put(pass_through, true),
   ok = ?tcpsend(Socket, Packet),
   {loop_data, Client};
 
 parse_packet(Socket, {socket, Packet}, Client) ->
   ?LOG([{parse_packet, {self, self()}, {bin, Packet}, {socket, Socket}, {client, Client}}]),
-  put(pass_through, true),
   Client1 = case catch pp:read(Packet) of
     {'EXIT', Error} ->
       ?LOG([{parse_packet, {error, Error}, {bin, Packet}}]),

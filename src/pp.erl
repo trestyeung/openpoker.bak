@@ -222,22 +222,26 @@ player_to_id(none) ->
     0;
 player_to_id(PID) 
   when is_integer(PID) ->
+    ?LOG([{player_to_id, PID}]),
     PID.
 
 id_to_player(0) ->
     undefined;
 
 id_to_player(PID) ->
-    global:whereis_name({player, PID}).
+  ?LOG([{id_to_player, PID}]),
+  global:whereis_name({player, PID}).
 
 player() ->
-    player(get(pass_through)).
+  player(get(pass_through)).
 
 player(true) ->
-    int();
+  ?LOG([{pp_player, int}]),
+  int();
 
 player(_) ->
-    wrap({fun player_to_id/1, fun id_to_player/1}, int()).
+  ?LOG([{pp_player, wrap}]),
+  wrap({fun player_to_id/1, fun id_to_player/1}, int()).
 
 tourney_to_id(TID) 
   when is_integer(TID) ->

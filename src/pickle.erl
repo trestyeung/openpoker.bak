@@ -208,8 +208,14 @@ read_optional({_, Pickler}, Bin) ->
 %%% pickling and the second one after unpickling.
 
 wrap(Wrap, Pickler) ->
-    {fun(Acc, Value) -> write_wrap(Wrap, Pickler, Acc, Value) end,
-     fun(Bin) -> read_wrap(Wrap, Pickler, Bin) end}.
+  {
+    fun(Acc, Value) -> 
+        write_wrap(Wrap, Pickler, Acc, Value) 
+    end,
+    fun(Bin) -> 
+        read_wrap(Wrap, Pickler, Bin) 
+    end
+  }.
 
 write_wrap({Wrap, _}, {Pickler, _}, Acc, Value) ->
     Pickler(Acc, Wrap(Value)).
