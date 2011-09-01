@@ -239,6 +239,7 @@ process_test_start_game(Client, Socket, R) ->
 
 process_game_query(Client, Socket, Q) 
   when is_record(Q, game_query) ->
+    ?LOG([{process_game_query, {game_query, Q}}]),
     find_games(Socket, 
                Q#game_query.game_type, 
                Q#game_query.limit_type,
@@ -287,6 +288,7 @@ parse_packet(Socket, {socket, Packet}, Client) ->
     R = #start_game{ rigged_deck = [_|_] } ->
       process_test_start_game(Client, Socket, R);
     R when is_record(R, game_query) ->
+      ?LOG([{parse_record, {game_query, R}}]),
       process_game_query(Client, Socket, R);
     Event ->
       ?LOG([{parse_packet, {event, Event}}]),
