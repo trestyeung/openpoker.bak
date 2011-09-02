@@ -7,9 +7,9 @@
 
 -record(tab_player_info, {
 					pid,
-					user_id, % external user id
 					usr,
 					password,
+          nick,
 					location,
 					login_errors = 0,
 					disabled = false % player is disabled

@@ -26,7 +26,7 @@
 
 -export([start/1, stop/1, stop/2]).
 
--export([create/4]).
+-export([create/5]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -206,7 +206,7 @@ handle_cast(#player_query{ player = Pid }, Data) ->
       handle_cast(_ = #player_info{
           player = PID,
           total_inplay = inplay(Data),
-          usr = Info#tab_player_info.usr,
+          nick = Info#tab_player_info.nick,
           location = Info#tab_player_info.location
         }, Data);
     _ ->
@@ -323,19 +323,21 @@ code_change(_OldVsn, Data, _Extra) ->
 %%      none
 %%     end.
 
-create(Usr, Pass, Location, Balance)
+create(Usr, Pass, Nick, Location, Balance)
   when is_list(Usr),
        is_list(Pass),
        is_list(Location),
        is_number(Balance) ->
     create(list_to_binary(Usr),
            list_to_binary(Pass),
+           list_to_binary(Nick),
            list_to_binary(Location),
            Balance);
 
-create(Usr, Pass, Location, Balance)
+create(Usr, Pass, Nick, Location, Balance)
   when is_binary(Usr),
        is_binary(Pass),
+       is_binary(Nick),
        is_binary(Location),
        is_number(Balance) ->
     case db:index_read(tab_player_info, Usr, #tab_player_info.usr) of
@@ -349,6 +351,7 @@ create(Usr, Pass, Location, Balance)
               %% store a hash of the password
               %% instead of the password itself
               password = erlang:phash2(Pass, 1 bsl 32),
+              nick = Nick,
               location = Location
              },
             ok = db:write(Info),

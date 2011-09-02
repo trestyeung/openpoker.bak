@@ -158,7 +158,7 @@
 -record(player_info, {
 					player,
 					total_inplay, 
-					usr,
+					nick,
 					location
 				 }).
 
