@@ -1,0 +1,8 @@
+#!/bin/bash
+
+erl -make
+cd ebin
+erl -sname test -run server start
+cd ..
+
+
