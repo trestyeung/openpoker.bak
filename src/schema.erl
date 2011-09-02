@@ -57,7 +57,7 @@ install_player_info(Nodes) ->
         mnesia:create_table(tab_player_info, 
                             [
                              {disc_copies, Nodes}, 
-                             {index, [nick]}, 
+                             {index, [usr]}, 
                              {type, set}, 
                              {attributes, record_info(fields, tab_player_info)}
                             ]).

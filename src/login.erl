@@ -31,18 +31,18 @@
 -include("test.hrl").
 -include("schema.hrl").
 
-login(Nick, Pass, Socket) 
-  when is_binary(Nick),
+login(Usr, Pass, Socket) 
+  when is_binary(Usr),
        is_binary(Pass),
        is_pid(Socket) -> % socket handler process
-    Recs = db:index_read(tab_player_info, Nick, #tab_player_info.nick),
-    login(Recs, [Nick, Pass, Socket]).
+    Recs = db:index_read(tab_player_info, Usr, #tab_player_info.usr),
+    login(Recs, [Usr, Pass, Socket]).
 
 login([], _) ->
     %% player not found
     {error, ?ERR_BAD_LOGIN};
 
-login([Info], [_Nick, Pass|_] = Args) 
+login([Info], [_Usr, Pass|_] = Args) 
   when is_record(Info, tab_player_info) ->
     PID = Info#tab_player_info.pid,
     Player = case db:read(tab_player, PID) of
@@ -110,10 +110,10 @@ login(Info, Player, client_down, [_, _, Socket]) ->
 login(Info, Player, player_busy, Args) ->
   login(Info, Player, client_down, Args);
 
-login(Info, Player, player_offline, [Nick, _, Socket]) ->
+login(Info, Player, player_offline, [Usr, _, Socket]) ->
   ?LOG([{login, player_offline}, {info, Info}, {player, Player}]),
   %% start player process
-  {ok, Pid} = player:start(Nick),
+  {ok, Pid} = player:start(Usr),
   ID = gen_server:call(Pid, 'ID'),
   gen_server:cast(Pid, {'SOCKET', Socket}),
   %% update player record

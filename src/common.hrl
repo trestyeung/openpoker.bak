@@ -20,7 +20,7 @@
 -record(test_game, {
 					irc_id,
 					winners,
-					nicks,
+					usrs,
 					trace
 				 }).
 

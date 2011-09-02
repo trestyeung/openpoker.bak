@@ -299,12 +299,12 @@ five_players_blinds_bust1_test() ->
 
 create_player_test() ->
     flush(),
-    Nick = nick(),
+    Usr = usr(),
     %% player does not exist
     ?assertEqual({error, []}, player:start(<<"blah">>)),
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 100.0),
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 100.0),
     ?assert(is_number(ID)),
-    {ok, Pid} = player:start(Nick),
+    {ok, Pid} = player:start(Usr),
     [P] = db:read(tab_player, ID),
     ?assertEqual(Pid, P#tab_player.process),
     ?assertEqual(ok, stop_player(Pid, ID)),
@@ -421,39 +421,39 @@ disable_account_test() ->
     flush(),
     [CC] = db:read(tab_cluster_config, 0),
     Max = CC#tab_cluster_config.max_login_errors,
-    Nick = nick(),
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 1000.0),
-    test80_1(Nick, Max),
+    Usr = usr(),
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 1000.0),
+    test80_1(Usr, Max),
     [Info] = db:read(tab_player_info, ID),
     ?assertEqual(Max, Info#tab_player_info.login_errors),
     ok = db:delete(tab_player_info, ID),
     ok.
 
-test80_1(Nick, 0) ->
+test80_1(Usr, 0) ->
     ?assertEqual({error, ?ERR_ACCOUNT_DISABLED}, 
-                 login:login(Nick, <<"@#%@#%">>, self())), 
+                 login:login(Usr, <<"@#%@#%">>, self())), 
     ok;
 
-test80_1(Nick, N) ->
+test80_1(Usr, N) ->
     ?assertEqual({error, ?ERR_BAD_LOGIN}, 
-                 login:login(Nick, <<"@#%@#%">>, self())), 
-    [Info] = db:index_read(tab_player_info, Nick, #tab_player_info.nick),
+                 login:login(Usr, <<"@#%@#%">>, self())), 
+    [Info] = db:index_read(tab_player_info, Usr, #tab_player_info.usr),
     Disabled = N == 0,
     ?assertEqual(Disabled, Info#tab_player_info.disabled),
-    test80_1(Nick, N - 1).
+    test80_1(Usr, N - 1).
 
 %%% Account disabled
 
 account_disabled_test() ->
     flush(),
-    Nick = nick(),
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 1000.0),
+    Usr = usr(),
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 1000.0),
     [Info] = db:read(tab_player_info, ID),
     ok = db:write(Info#tab_player_info{ disabled = true}),
     ?assertEqual({error, ?ERR_ACCOUNT_DISABLED}, 
-                 login:login(Nick, <<"@#%@#%">>, self())), 
+                 login:login(Usr, <<"@#%@#%">>, self())), 
     ?assertEqual({error, ?ERR_ACCOUNT_DISABLED}, 
-                 login:login(Nick, Nick, self())), 
+                 login:login(Usr, Usr, self())), 
     ok = db:delete(tab_player_info, ID),
     ok.
 
@@ -461,10 +461,10 @@ account_disabled_test() ->
 
 login_logout_test() ->
     flush(),
-    Nick = nick(),
-    {Pid, ID} = make_player(Nick),
+    Usr = usr(),
+    {Pid, ID} = make_player(Usr),
     Socket = self(),
-    ?assertEqual({ok, Pid}, login:login(Nick, Nick, Socket)),
+    ?assertEqual({ok, Pid}, login:login(Usr, Usr, Socket)),
     [P] = db:read(tab_player, ID),
     ?assertEqual(Pid, P#tab_player.process),
     ?assertEqual(Socket, P#tab_player.socket),
@@ -479,17 +479,17 @@ login_logout_test() ->
 
 player_online_not_playing_test() ->
     flush(),
-    Nick = nick(),
-    {Pid, ID} = make_player(Nick),
+    Usr = usr(),
+    {Pid, ID} = make_player(Usr),
     Socket = self(),
     %% login once
-    ?assertEqual({ok, Pid}, login:login(Nick, Nick, Socket)),
+    ?assertEqual({ok, Pid}, login:login(Usr, Usr, Socket)),
     [P] = db:read(tab_player, ID),
     ?assertEqual(Pid, P#tab_player.process),
     ?assertEqual(Socket, P#tab_player.socket),
     ?assertEqual(true, util:is_process_alive(Pid)),
     %% login twice
-    {ok, Pid1} = login:login(Nick, Nick, Pid),
+    {ok, Pid1} = login:login(Usr, Usr, Pid),
     [P1] = db:read(tab_player, ID),
     Pid1 = P1#tab_player.process,
     player:stop(Pid),
@@ -505,11 +505,11 @@ player_online_not_playing_test() ->
 
 player_online_playing_test() ->
     flush(),
-    Nick = nick(),
-    {Pid, ID} = make_player(Nick),
+    Usr = usr(),
+    {Pid, ID} = make_player(Usr),
     Socket = self(),
     %% login once
-    ?assertEqual({ok, Pid}, login:login(Nick, Nick, Socket)),
+    ?assertEqual({ok, Pid}, login:login(Usr, Usr, Socket)),
     %% set up a busy player
     Game = make_game(2, [{Pid, 1, fun() -> stop_player(Pid, ID) end}]),
     GID = gen_server:call(Game, 'ID'),
@@ -518,7 +518,7 @@ player_online_playing_test() ->
     timer:sleep(200),
     ?assertMatch([_], db:read(tab_inplay, {GID, ID})),
     %% login twice
-    ?assertEqual({ok, Pid}, login:login(Nick, Nick, Socket)),
+    ?assertEqual({ok, Pid}, login:login(Usr, Usr, Socket)),
     ?assertMatch([_], db:read(tab_inplay, {GID, ID})),
     [P] = db:read(tab_player, ID),
     ?assertEqual(Socket, P#tab_player.socket),
@@ -544,14 +544,14 @@ player_online_playing_test() ->
 
 disconnected_client_test() ->
     flush(),
-    Nick = nick(),
-    {Pid, ID} = make_player(Nick),
+    Usr = usr(),
+    {Pid, ID} = make_player(Usr),
     Socket = self(),
     Dummy = spawn(fun() -> ok end), 
     timer:sleep(100),
     ?assertEqual(false, util:is_process_alive(Dummy)),
-    ?assertEqual({ok, Pid}, login:login(Nick, Nick, Dummy)),
-    ?assertEqual({ok, Pid}, login:login(Nick, Nick, Socket)),
+    ?assertEqual({ok, Pid}, login:login(Usr, Usr, Dummy)),
+    ?assertEqual({ok, Pid}, login:login(Usr, Usr, Socket)),
     ?assertMatch([_], db:read(tab_player, ID)),
     ?assertEqual(ok, stop_player(Pid, ID)),
     ok.
@@ -564,15 +564,15 @@ network_login_logout_test() ->
     {ok, Server, Port} = test_server_start(Host),
     timer:sleep(100),
     %% create dummy players
-    Nick = nick(),
-    {ok, ID} = player:create(Nick, Nick, Nick, 1000.0),
+    Usr = usr(),
+    {ok, ID} = player:create(Usr, Usr, Usr, 1000.0),
     ?assertNot(ID == {error,player_exists}),
     ?assert(is_number(ID)),
     {ok, Socket} = tcp_server:start_client(Host, Port, 1024),
-    ?tcpsend1(Socket, #login{ nick = Nick, pass = <<"@#%^@#">> }),
+    ?tcpsend1(Socket, #login{ usr = Usr, pass = <<"@#%^@#">> }),
     X = wait([leave, chat, ping, pong]),
     ?assertEqual(#bad{ cmd = ?CMD_LOGIN, error = ?ERR_BAD_LOGIN }, X),
-    ?tcpsend1(Socket, #login{ nick = Nick, pass = Nick }),
+    ?tcpsend1(Socket, #login{ usr = Usr, pass = Usr }),
     X2 = wait([ping, pong]),
     [TP] = db:read(tab_player, ID),
     Player = TP#tab_player.process,
@@ -582,7 +582,7 @@ network_login_logout_test() ->
     timer:sleep(100),
     %% login again
     {ok, Socket1} = tcp_server:start_client(Host, Port, 1024),
-    ?tcpsend1(Socket1, #login{ nick = Nick, pass = Nick }),
+    ?tcpsend1(Socket1, #login{ usr = Usr, pass = Usr }),
     X3 = wait([ping, pong]),
     ?assertEqual(#you_are{ player = Player }, X3),
     ?tcpsend1(Socket1, #logout{}),
@@ -623,8 +623,8 @@ simple_game_simulation_test() ->
     Data
         = [{_, ID2, _}, {_, ID1, _}, _]
         = setup_game(Host, Port, Game,
-                     [{nick(), 1, ['CALL', 'FOLD']},
-                      {nick(), 2, ['CALL']}]),
+                     [{usr(), 1, ['CALL', 'FOLD']},
+                      {usr(), 2, ['CALL']}]),
     timer:sleep(1000),
     %% make sure game is started
     ?assertEqual({'START', GID}, wait()),
@@ -657,8 +657,8 @@ leave_after_sb_posted_test() ->
     gen_server:cast(Game, {'NOTE', leave_after_sb_posted}),
     %% create dummy players
     Data = setup_game(Host, Port, Game,
-                      [{nick(), 1, ['CALL']},
-                       {nick(), 2, ['LEAVE']}]),
+                      [{usr(), 1, ['CALL']},
+                       {usr(), 2, ['LEAVE']}]),
     %% make sure game is started
     ?assertEqual({'START', GID}, wait()),
     ?assertEqual({'CANCEL', GID}, wait([chat, ping, pong])),
@@ -676,10 +676,10 @@ dynamic_game_start_test() ->
     {ok, Server, Port} = test_server_start(Host),
     timer:sleep(3000),
     %% create dummy players
-    Nick = nick(),
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 1000.0),
+    Usr = usr(),
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 1000.0),
     {ok, Socket} = tcp_server:start_client(Host, Port, 1024),
-    ?tcpsend1(Socket, #login{ nick = Nick, pass = Nick}),
+    ?tcpsend1(Socket, #login{ usr = Usr, pass = Usr}),
     X1 = wait(),
     [TP] = db:read(tab_player, ID),
     Player = TP#tab_player.process,
@@ -718,10 +718,10 @@ query_own_balance_test() ->
     Host = localhost, 
     {ok, Server, Port} = test_server_start(Host),
     timer:sleep(100),
-    Nick = nick(),
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 1000.0),
+    Usr = usr(),
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 1000.0),
     {ok, Socket} = tcp_server:start_client(Host, Port, 1024),
-    ?tcpsend1(Socket, #login{ nick = Nick, pass = Nick }),
+    ?tcpsend1(Socket, #login{ usr = Usr, pass = Usr }),
     X = wait(),
     [TP] = db:read(tab_player, ID),
     Player = TP#tab_player.process,
@@ -764,10 +764,10 @@ query_own_balance_test() ->
 
 %% test190(Host, Port, [Info|Rest])
 %%   when is_record(Info, tab_player_info) ->
-%%     Nick = Info#tab_player_info.nick,
+%%     Usr = Info#tab_player_info.usr,
 %%     ID = Info#tab_player_info.pid,
 %%     {ok, Socket} = tcp_server:start_client(Host, Port, 1024),
-%%     ?tcpsend1(Socket, #login{ nick = Nick, pass = Nick }),
+%%     ?tcpsend1(Socket, #login{ usr = Usr, pass = Usr }),
 %%     X = wait([ping, pong]),
 %%     [TP] = db:read(tab_player, ID),
 %%     Player = TP#tab_player.process,
@@ -789,8 +789,8 @@ two_games_in_a_row_test() ->
     gen_server:cast(Game, {'NOTE', two_games_in_a_row}),
     %% create dummy players
     Data = setup_game(Host, Port, Game, 2, % games to play
-                      [{nick("test200"), 1, ['CALL', 'FOLD', 'CALL', 'FOLD']},
-                       {nick("test200"), 2, ['CALL', 'CALL', 'FOLD']}]),
+                      [{usr("test200"), 1, ['CALL', 'FOLD', 'CALL', 'FOLD']},
+                       {usr("test200"), 2, ['CALL', 'CALL', 'FOLD']}]),
     %% make sure game is started
     ?assertEqual({'START', GID}, wait()),
     %% wait for game to end
@@ -819,9 +819,9 @@ two_games_with_leave_test() ->
     gen_server:cast(Game, {'NOTE', two_games_with_leave}),
     %% create dummy players
     Data = setup_game(Host, Port, Game, 1, % games to play
-                      [{nick(), 1, ['CALL', 'RAISE', 'CALL', 'CHECK', 'CHECK']},
-                       {nick(), 2, ['CALL', 'QUIT']},
-                       {nick(), 3, ['RAISE', 'CALL', 'CALL', 'CHECK', 'CHECK']}
+                      [{usr(), 1, ['CALL', 'RAISE', 'CALL', 'CHECK', 'CHECK']},
+                       {usr(), 2, ['CALL', 'QUIT']},
+                       {usr(), 3, ['RAISE', 'CALL', 'CALL', 'CHECK', 'CHECK']}
                       ]),
     %% make sure game is started
     ?assertEqual({'START', GID}, wait()),
@@ -856,19 +856,19 @@ leave_out_of_turn_test() ->
     gen_server:cast(Game, {'NOTE', leave_out_of_turn}),
     %% create dummy players
     Data = setup_game(Host, Port, Game, 1, % games to play
-                      [{nick(), 1, ['CALL', %1
+                      [{usr(), 1, ['CALL', %1
                                     'CALL', %1
                                     'CHECK', %2
                                     'CHECK', %3
                                     'CHECK'
                                    ]},
-                       {nick(), 2, ['CALL', %1
+                       {usr(), 2, ['CALL', %1
                                     'CALL', %1
                                     'CHECK', %2
                                     'CHECK', %3
                                     'CHECK'
                                    ]},
-                       {nick(), 3, ['RAISE', 
+                       {usr(), 3, ['RAISE', 
                                     'CALL', 
                                     'CHECK', 
                                     {'FILTER', fun dumbo:leave_on_river/2}
@@ -899,10 +899,10 @@ leave_out_of_turn_test() ->
 %%     gen_server:cast(Game, {'NOTE', dummy_game}),
 %%     %% create dummy players
 %%     setup_game(Host, Port, Game,
-%%         [{nick(), 1, ['SIT OUT']},
-%%    {nick(), 2, ['SIT OUT']},
-%%    {nick(), 3, ['SIT OUT']},
-%%    {nick(), 4, ['SIT OUT']}]),
+%%         [{usr(), 1, ['SIT OUT']},
+%%    {usr(), 2, ['SIT OUT']},
+%%    {usr(), 3, ['SIT OUT']},
+%%    {usr(), 4, ['SIT OUT']}]),
 %%     GID.
 
 modules() -> 
@@ -934,11 +934,11 @@ make_game_5_bust() ->
     make_game_5_bust(1, 2, 3).
 
 make_game_5_bust(Button_N, SB_N, BB_N) ->
-    {A, AP} = test:make_player(test:nick()),
-    {B, BP} = test:make_player(test:nick()),
-    {C, CP} = test:make_player(test:nick()),
-    {D, DP} = test:make_player(test:nick()),
-    {E, EP} = test:make_player(test:nick()),
+    {A, AP} = test:make_player(test:usr()),
+    {B, BP} = test:make_player(test:usr()),
+    {C, CP} = test:make_player(test:usr()),
+    {D, DP} = test:make_player(test:usr()),
+    {E, EP} = test:make_player(test:usr()),
     AF = fun() -> test:stop_player(A, AP) end,
     BF = fun() -> test:stop_player(B, BP) end,
     CF = fun() -> test:stop_player(C, CP) end,
@@ -960,17 +960,17 @@ cleanup_players([{_, _, F}|T]) ->
     ?assertEqual(ok, F()),
     cleanup_players(T).
 
-make_player(Nick) 
-  when is_binary(Nick) ->
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 1000.0),
-    {ok, Pid} = player:start(Nick),
+make_player(Usr) 
+  when is_binary(Usr) ->
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 1000.0),
+    {ok, Pid} = player:start(Usr),
     {Pid, ID}.
 
 make_players(0, Acc) ->
     Acc;
 
 make_players(N, Acc) ->
-    {Pid, ID} = make_player(nick()),
+    {Pid, ID} = make_player(usr()),
     F = fun() -> stop_player(Pid, ID) end,
     make_players(N - 1, [{Pid, N, F}|Acc]).
 
@@ -1076,11 +1076,11 @@ connect_observer(Host, Port, Game, N, Trace) ->
     F = fun() -> stop_proc(Obs, fun bot:stop/1) end,
     {Obs, 0, F}.
 
-connect_player(Nick, Host, Port, Game, SeatNum, N, Actions) ->
-    {ok, ID} = player:create(Nick, Nick, <<"">>, 1000.0),
+connect_player(Usr, Host, Port, Game, SeatNum, N, Actions) ->
+    {ok, ID} = player:create(Usr, Usr, <<"">>, 1000.0),
     {ok, Bot} = bot:start(Host, Port, dumbo, [Actions, N]),
     GID = gen_server:call(Game, 'ID'),
-    bot:join(Bot, GID, Nick, Nick, SeatNum, 1000.0),
+    bot:join(Bot, GID, Usr, Usr, SeatNum, 1000.0),
     F = fun() -> stop_proc(Bot, fun bot:stop/1) end,
     {Bot, ID, F}.
 
@@ -1099,25 +1099,25 @@ setup_game(Host, Port, Game, GamesToPlay, Bots)
 setup_game(_Host, _Port, _Game, _GamesToPlay, []) ->
     [].
 
-setup_game(Host, Port, Game, Games, [{Nick, SeatNum, Actions}|Rest], Cleanup) 
+setup_game(Host, Port, Game, Games, [{Usr, SeatNum, Actions}|Rest], Cleanup) 
   when is_list(Host),
        is_number(Port),
        is_pid(Game),
-       is_binary(Nick),
+       is_binary(Usr),
        is_number(SeatNum),
        is_number(Games),
        is_list(Actions),
        is_list(Cleanup) ->
-    X = connect_player(Nick, Host, Port, Game, SeatNum, Games, Actions),
+    X = connect_player(Usr, Host, Port, Game, SeatNum, Games, Actions),
     setup_game(Host, Port, Game, Games, Rest, [X|Cleanup]);
 
 setup_game(_Host, _Port, _Game, _GamesToPlay, [], Cleanup) ->
     Cleanup.
 
-nick() ->
-    nick("").
+usr() ->
+    usr("").
 
-nick(Prefix) ->
+usr(Prefix) ->
     list_to_binary(pid_to_list(self()) ++ Prefix ++
                    integer_to_list(random:uniform(10000000))).
 

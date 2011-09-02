@@ -77,7 +77,7 @@ datetime() ->
 timestamp() ->
     tuple({int(), int(), int()}).
 
-nick() ->
+usr() ->
     string().
 
 pass() ->
@@ -280,7 +280,7 @@ good() ->
 
 login() ->
     record(login, {
-             nick(),
+             usr(),
              pass()
             }).
 
@@ -438,7 +438,7 @@ player_info() ->
     record(player_info, {
              player(),
              total_inplay_amount(), 
-             nick(),
+             usr(),
              location()
             }).
 

@@ -134,10 +134,10 @@ setup_players(_IRC_ID, _GID, _Host, _Port, _Players, 0, Acc) ->
 
 setup_players(IRC_ID, GID, Host, Port, [Player|Rest], N, Acc) ->
     %% start bot
-    Nick = list_to_binary(Player#irc_player.nick),
+    Usr = list_to_binary(Player#irc_player.usr),
     Pass = <<"foo">>,
     {ok, Bot} = bot:start(Host, Port, dumbo, [Player#irc_player.actions, 1]),
-    bot:join(Bot, GID, Nick, Pass, N, Player#irc_player.balance),
+    bot:join(Bot, GID, Usr, Pass, N, Player#irc_player.balance),
     setup_players(IRC_ID, GID, Host, Port, Rest, N - 1, [{Bot, N}|Acc]).
 
 setup_observer(Parent, GID, Host, Port, Trace) 

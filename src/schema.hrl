@@ -8,7 +8,7 @@
 -record(tab_player_info, {
 					pid,
 					user_id, % external user id
-					nick,
+					usr,
 					password,
 					location,
 					login_errors = 0,
@@ -48,7 +48,7 @@
 				 }).
 
 -record(tab_seat_history, {
-					nick,
+					usr,
 					hand,
 					state
 				 }).

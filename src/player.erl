@@ -45,10 +45,10 @@
           self
          }).
 
-start(Nick) 
-  when is_binary(Nick) ->
+start(Usr) 
+  when is_binary(Usr) ->
     %% make sure we exist
-    case db:index_read(tab_player_info, Nick, #tab_player_info.nick) of
+    case db:index_read(tab_player_info, Usr, #tab_player_info.usr) of
         [Info] ->
             PID = Info#tab_player_info.pid,
             gen_server:start({global, {player, PID}}, player, [PID], []);
@@ -206,7 +206,7 @@ handle_cast(#player_query{ player = Pid }, Data) ->
       handle_cast(_ = #player_info{
           player = PID,
           total_inplay = inplay(Data),
-          nick = Info#tab_player_info.nick,
+          usr = Info#tab_player_info.usr,
           location = Info#tab_player_info.location
         }, Data);
     _ ->
@@ -323,29 +323,29 @@ code_change(_OldVsn, Data, _Extra) ->
 %%      none
 %%     end.
 
-create(Nick, Pass, Location, Balance)
-  when is_list(Nick),
+create(Usr, Pass, Location, Balance)
+  when is_list(Usr),
        is_list(Pass),
        is_list(Location),
        is_number(Balance) ->
-    create(list_to_binary(Nick),
+    create(list_to_binary(Usr),
            list_to_binary(Pass),
            list_to_binary(Location),
            Balance);
 
-create(Nick, Pass, Location, Balance)
-  when is_binary(Nick),
+create(Usr, Pass, Location, Balance)
+  when is_binary(Usr),
        is_binary(Pass),
        is_binary(Location),
        is_number(Balance) ->
-    case db:index_read(tab_player_info, Nick, #tab_player_info.nick) of
+    case db:index_read(tab_player_info, Usr, #tab_player_info.usr) of
         [_] ->
             {error, player_exists};
         _ ->
             ID = counter:bump(player),
             Info = #tab_player_info {
               pid = ID,
-              nick = Nick,
+              usr = Usr,
               %% store a hash of the password
               %% instead of the password itself
               password = erlang:phash2(Pass, 1 bsl 32),

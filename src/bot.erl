@@ -40,7 +40,7 @@
           host, 
           port,
           args,
-          nick,
+          usr,
           pass,
           state,
           data,
@@ -63,12 +63,12 @@ watch(Bot, Game)
        is_integer(Game) ->
     gen_server:cast(Bot, {'WATCH', Game}).
 
-join(Bot, Game, Nick, Pass, Seat, BuyIn) 
+join(Bot, Game, Usr, Pass, Seat, BuyIn) 
   when is_pid(Bot),
        is_integer(Game),
        is_integer(Seat),
        is_number(BuyIn) ->
-    gen_server:cast(Bot, {'JOIN', Game, Nick, Pass, Seat, BuyIn}).
+    gen_server:cast(Bot, {'JOIN', Game, Usr, Pass, Seat, BuyIn}).
 
 %%%
 %%% OTP
@@ -123,15 +123,15 @@ handle_cast({'WATCH', GID}, Bot)
     ok = send(Bot#bot.socket, #watch{ game = GID }),
     {noreply, Bot#bot{ gid = GID, no_join = true }};
 
-handle_cast({'JOIN', GID, Nick, Pass, Seat, BuyIn}, Bot)
+handle_cast({'JOIN', GID, Usr, Pass, Seat, BuyIn}, Bot)
   when Bot#bot.socket /= undefined ->
     Sock = Bot#bot.socket,
-    ok = send(Sock, #login{ nick = Nick, pass = Pass }),
+    ok = send(Sock, #login{ usr = Usr, pass = Pass }),
     Bot1 = Bot#bot{ 
              gid = GID, 
              seat = Seat, 
              buyin = BuyIn,
-             nick = Nick,
+             usr = Usr,
              pass = Pass
             },
     dispatch_not_handled(#our_game{ game = GID, seat = Seat }, Bot1);

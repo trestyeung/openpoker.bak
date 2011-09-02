@@ -81,7 +81,7 @@ handle_cast(stop, Data) ->
 handle_cast({'RUN', Game, Barrier, Delay, Trace}, Data) 
   when is_record(Game, irc_game) ->
     T1 = now(),
-    Game1 = mbu:fix_nicks(Game),
+    Game1 = mbu:fix_usrs(Game),
     mbu:update_players(Game1),
     %% start test game
     Host = Data#mb.host,
@@ -101,7 +101,7 @@ handle_cast({'RUN', Game, Barrier, Delay, Trace}, Data)
     TestGame = #test_game {
       irc_id = Game1#irc_game.id,
       winners = mbu:ircdb_winners(Game1),
-      nicks = mbu:ircdb_nicks(Game1),
+      usrs = mbu:ircdb_usrs(Game1),
       trace = Trace
      },
     Games = Data#mb.games,

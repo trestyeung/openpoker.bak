@@ -1,7 +1,7 @@
 %%% Copyright (C) 2005-2008 Wager Labs, SA
 
 -record(irc_player, {
-					nick, 
+					usr, 
 					%% [action1, action2, ...]
 					actions,
 					cards,

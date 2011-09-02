@@ -92,7 +92,7 @@ handle_cast(#player_query{ player = PID }, Data) ->
             handle_cast(_ = #player_info{
                           player = Player#tab_player.process, 
                           total_inplay = 0.0,
-                          nick = Info#tab_player_info.nick,
+                          usr = Info#tab_player_info.usr,
                           location = Info#tab_player_info.location
                          }, Data);
         _ ->

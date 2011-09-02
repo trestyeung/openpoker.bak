@@ -194,8 +194,8 @@ handle_info(Info, Server) ->
 code_change(_OldVsn, Server, _Extra) ->
   {ok, Server}. %% }}}
 
-process_login(Client, Socket, Nick, Pass) -> %% {{{ socket connection processer
-  case login:login(Nick, Pass, self()) of
+process_login(Client, Socket, Usr, Pass) -> %% {{{ socket connection processer
+  case login:login(Usr, Pass, self()) of
     {error, Error} ->
       ?LOG([{error, Error}]),
       ok = ?tcpsend(Socket, #bad{ cmd = ?CMD_LOGIN, error = Error}),
@@ -275,9 +275,9 @@ parse_packet(Socket, {socket, Packet}, Client) ->
     {'EXIT', Error} ->
       ?LOG([{parse_packet, {error, Error}, {bin, Packet}}]),
       Client;
-    #login{ nick = Nick, pass = Pass} ->
-      ?LOG([{cmd_login}, {nick, Nick}, {pass, Pass}]),
-      process_login(Client, Socket, Nick, Pass);
+    #login{ usr = Usr, pass = Pass} ->
+      ?LOG([{cmd_login}, {usr, Usr}, {pass, Pass}]),
+      process_login(Client, Socket, Usr, Pass);
     #logout{} ->
       ?LOG([{logout}]),
       process_logout(Client, Socket);

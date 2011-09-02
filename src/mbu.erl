@@ -25,8 +25,8 @@
 %%%
 
 -export([opendb/0, closedb/1, create_players/0,
-         update_players/1, fix_nicks/1, fixup_winners/2,
-         ircdb_winners/1, ircdb_nicks/1, match_winners/2, 
+         update_players/1, fix_usrs/1, fixup_winners/2,
+         ircdb_winners/1, ircdb_usrs/1, match_winners/2, 
          remove/1, print/1, filter/0, count/0
         ]).
 
@@ -58,7 +58,7 @@ create_players(DB, Key) ->
 
 create_players(Game) 
   when is_record(Game, irc_game) ->
-    Game1 = fix_nicks(Game),
+    Game1 = fix_usrs(Game),
     create_players(tuple_to_list(Game1#irc_game.players));
 
 create_players([]) ->
@@ -66,16 +66,16 @@ create_players([]) ->
 
 create_players([Player|Rest])
   when is_record(Player, irc_player) ->
-    Nick = list_to_binary(Player#irc_player.nick),
+    Usr = list_to_binary(Player#irc_player.usr),
     Balance = Player#irc_player.balance,
     case db:index_read(tab_player_info, 
-                       Nick, #tab_player_info.nick) of
+                       Usr, #tab_player_info.usr) of
         [Info] ->
             PID = Info#tab_player_info.pid,
             db:delete(tab_balance, PID),
             db:update_balance(tab_balance, PID, Balance);
         [] ->
-            player:create(Nick, <<"foo">>, <<"">>, Balance)
+            player:create(Usr, <<"foo">>, <<"">>, Balance)
     end,
     create_players(Rest).
 
@@ -83,44 +83,44 @@ update_players(Game)
   when is_record(Game, irc_game) ->
     create_players(tuple_to_list(Game#irc_game.players)).
 
-fix_nicks(Game) ->
+fix_usrs(Game) ->
     Players = Game#irc_game.players,
     Size = size(Players),
     Game#irc_game {
-      players = fix_nicks(Game#irc_game.id, Players, Size)
+      players = fix_usrs(Game#irc_game.id, Players, Size)
      }.
 
-fix_nicks(_Id, Players, 0) ->
+fix_usrs(_Id, Players, 0) ->
     Players;
 
-fix_nicks(Id, Players, Size) ->
+fix_usrs(Id, Players, Size) ->
     Player = element(Size, Players),
     Player1 = Player#irc_player {
-                nick = Player#irc_player.nick 
+                usr = Player#irc_player.usr 
                 ++ [$/] ++ integer_to_list(Id)
                },
     Players1 = setelement(Size, Players, Player1),
-    fix_nicks(Id, Players1, Size - 1).
+    fix_usrs(Id, Players1, Size - 1).
 
-ircdb_nicks(Game) ->
+ircdb_usrs(Game) ->
     Players = Game#irc_game.players,
-    ircdb_nicks(Players, size(Players), erlang:make_tuple(size(Players), none)).
+    ircdb_usrs(Players, size(Players), erlang:make_tuple(size(Players), none)).
 
-ircdb_nicks(_Players, 0, Tuple) ->
+ircdb_usrs(_Players, 0, Tuple) ->
     Tuple;
 
-ircdb_nicks(Players, Count, Tuple) ->
+ircdb_usrs(Players, Count, Tuple) ->
     Player = element(Count, Players),
-    Nick = list_to_atom(Player#irc_player.nick), 
-    Tuple1 = setelement(Count, Tuple, Nick),
-    ircdb_nicks(Players, Count - 1, Tuple1).
+    Usr = list_to_atom(Player#irc_player.usr), 
+    Tuple1 = setelement(Count, Tuple, Usr),
+    ircdb_usrs(Players, Count - 1, Tuple1).
 
 fixup_winners(Game, Winners) ->
     fixup_winners(Game, gb_trees:to_list(Winners), gb_trees:empty()).
 
 fixup_winners(Game, [{SeatNum, Amount}|Rest], Tree) ->
-    Nick = element(SeatNum, Game#test_game.nicks),
-    fixup_winners(Game, Rest, gb_trees:insert(Nick, Amount, Tree));
+    Usr = element(SeatNum, Game#test_game.usrs),
+    fixup_winners(Game, Rest, gb_trees:insert(Usr, Amount, Tree));
 
 fixup_winners(_Game, [], Tree) ->
     Tree.
@@ -134,11 +134,11 @@ ircdb_winners(_Players, 0, Tree) ->
 
 ircdb_winners(Players, Count, Tree) ->
     Player = element(Count, Players),
-    Nick = list_to_atom(Player#irc_player.nick), 
+    Usr = list_to_atom(Player#irc_player.usr), 
     Win = Player#irc_player.win,
     if 
         Win /= 0 ->
-            NewTree = gb_trees:insert(Nick, Win, Tree);
+            NewTree = gb_trees:insert(Usr, Win, Tree);
         true ->
             NewTree = Tree
     end,

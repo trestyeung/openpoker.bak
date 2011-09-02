@@ -90,7 +90,7 @@ process(R = #player_info{}, Data) ->
     PID = R#player_info.player, 
     Amount = gb_trees:get(PID, Data#obs.winners),
     T1 = gb_trees:delete(PID, Data#obs.winners),
-    Winners1 = gb_trees:insert(R#player_info.nick, Amount, T1),
+    Winners1 = gb_trees:insert(R#player_info.usr, Amount, T1),
     Data#obs{ winners = Winners1 };
 
 process(R = #notify_start_game{}, Data) ->

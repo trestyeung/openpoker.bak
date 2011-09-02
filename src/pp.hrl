@@ -18,7 +18,7 @@
 -define(CMD_LOGIN, 1).
 
 -record(login, {
-					nick,
+					usr,
 					pass
 				 }).
 
@@ -158,7 +158,7 @@
 -record(player_info, {
 					player,
 					total_inplay, 
-					nick,
+					usr,
 					location
 				 }).
 

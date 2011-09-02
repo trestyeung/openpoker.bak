@@ -83,7 +83,7 @@ read_player_data(Db, B, N) ->
     read_player_data(Db, Rest, N + 1).
 
 parse_player(Db, B) ->
-    {Nick, B1} = read_string(B), % nick
+    {Usr, B1} = read_string(B), % usr
     {Id, B2} = read_int(B1), % game id
     {_PlayerCount, B3} = read_int(B2), % #irc_players
     {SeatNum, B4} = read_int(B3), % seat#
@@ -96,7 +96,7 @@ parse_player(Db, B) ->
     {Win, B11} = read_int(B10), % amount won
     Cards = read_cards(B11), % pocket cards
     Player = #irc_player {
-      nick = Nick,
+      usr = Usr,
       actions = PA ++ FA ++ TA ++ RA,
       cards = Cards,
       balance = Balance,
