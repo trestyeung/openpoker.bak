@@ -26,7 +26,7 @@
 
 -export([start/1, stop/1, stop/2]).
 
--export([create/5]).
+-export([create/5, update_photo/2]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -207,6 +207,7 @@ handle_cast(#player_query{ player = Pid }, Data) ->
           player = PID,
           total_inplay = inplay(Data),
           nick = Info#tab_player_info.nick,
+          photo = Info#tab_player_info.photo,
           location = Info#tab_player_info.location
         }, Data);
     _ ->
@@ -358,6 +359,18 @@ create(Usr, Pass, Nick, Location, Balance)
             db:update_balance(tab_balance, ID, Balance),
             {ok, ID}
     end.
+
+update_photo(ID, Photo) when is_binary(Photo) ->
+  case db:read(tab_player_info, ID) of
+    [Info] -> 
+      Info1 = Info#tab_player_info{
+        photo = Photo
+      },
+      db:write(Info1),
+      {ok, ID};
+    _ ->
+      {error, player_not_exists}
+  end.
 
 create_runtime(ID, Pid) 
   when is_number(ID),

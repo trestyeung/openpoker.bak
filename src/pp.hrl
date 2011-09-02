@@ -159,6 +159,7 @@
 					player,
 					total_inplay, 
 					nick,
+          photo,
 					location
 				 }).
 

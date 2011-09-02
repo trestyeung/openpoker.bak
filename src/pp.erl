@@ -79,6 +79,11 @@ timestamp() ->
 
 usr() ->
     string().
+nick() ->
+    string().
+
+photo() ->
+  binary(int()).
 
 pass() ->
     string().
@@ -438,7 +443,8 @@ player_info() ->
     record(player_info, {
              player(),
              total_inplay_amount(), 
-             usr(),
+             nick(),
+             photo(),
              location()
             }).
 
