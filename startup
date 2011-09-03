@@ -2,7 +2,8 @@
 
 erl -make
 cd ebin
-erl -sname test -run server start
+rm -rf Mnesia*
+erl -sname test -run test init
 cd ..
 
 

@@ -26,7 +26,7 @@
          make_player/1, stop_player/2, install_trigger/3,
          wait/2]).
 
--export([init_test_data/0]).
+-export([init/0]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -1241,7 +1241,10 @@ test_make_game(Cmd, Context, Modules, N) ->
             test_make_game(Cmd, Context, Modules, N + 1)
     end.
 
-            
-  init_test_data() ->
+init() ->
   schema:install(),
-  player:create("1000", "pass", "5b635bee55S3", "5Lit5Zu9", 1000).
+  player:create("1000", "pass", "5b635bee55S3", "5Lit5Zu9", 1000),
+  player:create("1001", "pass", "6LWM56We", "5YyX5Lqs", 1000),
+  player:create("1002", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000),
+  server:start().
+  
