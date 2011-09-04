@@ -236,8 +236,7 @@ handle_info({'EXIT', _LoopPid, Reason},
     normal ->
       ok;
     _ ->
-      error_logger:error_report({?MODULE, ?LINE,
-          {child_error, Reason}})
+      ?ERROR([{exit, {child_error, Reason}}])
   end,
   State1 = State#mochiweb_socket_server{max=Max + 1},
   State2 = case Pid of

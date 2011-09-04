@@ -270,20 +270,16 @@ parse_packet(Socket, {packet, Packet}, Client) ->
 parse_packet(Socket, {socket, Packet}, Client) ->
   Data = (catch pp:read(Packet)),
   case Data of
-    #ping{} ->
-      opps;
-    _ ->
-      ?LOG([{parse_packet, {self, self()}, {socket, Socket}, {client, Client}, {bin, Packet}}])
+    #ping{} -> opps;
+		#seat_query{} -> opps;
+    _ -> ?LOG([{parse_packet, {self, self()}, {socket, Socket}, {client, Client}, {bin, Packet}, {data, Data}}])
   end,
   Client1 = case Data of 
     {'EXIT', Error} ->
-      ?LOG([{parse_packet, {error, Error}, {bin, Packet}}]),
       Client;
     #login{ usr = Usr, pass = Pass} ->
-      ?LOG([{cmd_login}, {usr, Usr}, {pass, Pass}]),
       process_login(Client, Socket, Usr, Pass);
     #logout{} ->
-      ?LOG([{logout}]),
       process_logout(Client, Socket);
     R = #ping{} ->
       process_ping(Client, Socket, R);
@@ -292,10 +288,8 @@ parse_packet(Socket, {socket, Packet}, Client) ->
     R = #start_game{ rigged_deck = [_|_] } ->
       process_test_start_game(Client, Socket, R);
     R when is_record(R, game_query) ->
-      ?LOG([{parse_record, {game_query, R}}]),
       process_game_query(Client, Socket, R);
     Event ->
-      ?LOG([{parse_packet, {event, Event}}]),
       process_event(Client, Socket, Event)
   end,
   {loop_data, Client1};
