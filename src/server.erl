@@ -261,7 +261,6 @@ process_event(Client, _Socket, Event) ->
   Client1. %% }}}
 
 parse_packet(_Socket, tcp_closed, Client) ->
-  ?LOG([{tcp_closed}]),
   gen_server:cast(Client#client.player, 'DISCONNECT');
 
 parse_packet(Socket, {packet, Packet}, Client) ->
@@ -269,8 +268,14 @@ parse_packet(Socket, {packet, Packet}, Client) ->
   {loop_data, Client};
 
 parse_packet(Socket, {socket, Packet}, Client) ->
-  ?LOG([{parse_packet, {self, self()}, {socket, Socket}, {client, Client}, {bin, Packet}}]),
-  Client1 = case catch pp:read(Packet) of
+  Data = (catch pp:read(Packet)),
+  case Data of
+    #ping{} ->
+      opps;
+    _ ->
+      ?LOG([{parse_packet, {self, self()}, {socket, Socket}, {client, Client}, {bin, Packet}}])
+  end,
+  Client1 = case Data of 
     {'EXIT', Error} ->
       ?LOG([{parse_packet, {error, Error}, {bin, Packet}}]),
       Client;
