@@ -227,25 +227,21 @@ player_to_id(none) ->
     0;
 player_to_id(PID) 
   when is_integer(PID) ->
-    ?LOG([{player_to_id, PID}]),
     PID.
 
 id_to_player(0) ->
     undefined;
 
 id_to_player(PID) ->
-  ?LOG([{id_to_player, PID}]),
   global:whereis_name({player, PID}).
 
 player() ->
   player(get(pass_through)).
 
 player(true) ->
-  ?LOG([{pp_player, int}]),
   int();
 
 player(_) ->
-  ?LOG([{pp_player, wrap}]),
   wrap({fun player_to_id/1, fun id_to_player/1}, int()).
 
 tourney_to_id(TID) 
@@ -966,7 +962,14 @@ read(<<?CMD_PONG, Bin/binary>>) ->
 
 send(Socket, Data, _Ping) ->
   Bin = list_to_binary(write(Data)),
-  ?LOG([{socket_send, {bin, Bin}}]),
+  
+  [Cmd|_] = tuple_to_list(Data),
+  case Cmd of
+    seat_state -> opps;
+    pong -> opps;
+    _ ->
+      ?LOG([{socket_send, {data, Data}, {bin, Bin}}])
+  end,
   %%io:format("SND ~p~n", [Bin]),
   case catch gen_tcp:send(Socket, websocket:encoding(Bin)) of
     ok ->

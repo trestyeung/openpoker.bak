@@ -154,14 +154,15 @@ handle_cast(#logout{}, Data) ->
     end;
 
 handle_cast(R = #join{ game = Game }, Data) ->
-    R1 = R#join{ player = self(), pid = Data#pdata.pid },
-    case gb_trees:is_defined(Game, Data#pdata.watching) of
-        true ->
-            gen_server:cast(Game, R1);
-        _ ->
-            oops
-    end,
-    {noreply, Data};
+  R1 = R#join{ player = self(), pid = Data#pdata.pid },
+  ?LOG([{player_join, {game, Game}, {data, Data#pdata.watching}}]),
+  case gb_trees:is_defined(Game, Data#pdata.watching) of
+    true ->
+      gen_server:cast(Game, R1);
+    _ ->
+      oops
+  end,
+  {noreply, Data};
 
 handle_cast(R, Data) 
   when is_record(R, wait_bb);
@@ -411,7 +412,7 @@ leave_games(Data, [Game|Rest]) ->
 forward_to_client(Event, Data) ->    
   if 
     Data#pdata.socket /= none ->
-      ?LOG([{forward_to_client, {socket, Data#pdata.socket}, {event, Event}, {data, Data}}]),
+      %?LOG([{forward_to_client, {socket, Data#pdata.socket}, {event, Event}, {data, Data}}]),
       Data#pdata.socket ! {packet, Event};
     true ->
       ok

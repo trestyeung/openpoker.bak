@@ -364,6 +364,7 @@ leave(Game, R) ->
                                                    muck = false
                                                   })
                              },
+                    %% TODO DEBUG
                     %% update inplay balance
                     Inplay = Seat#seat.inplay,
                     db:update_balance(tab_balance, PID, Inplay),

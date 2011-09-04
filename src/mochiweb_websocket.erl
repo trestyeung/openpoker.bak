@@ -142,7 +142,6 @@ request(Socket, MyLoop, LoopData) ->
       {packet, Packet}
   end,
 
-  ?LOG([{websocket, {request, R}}]),
   LoopData1 = MyLoop(Socket, R, LoopData),
   request(Socket, MyLoop, LoopData1).
   %WebSocketRequest = websocket_request:new(Socket),
