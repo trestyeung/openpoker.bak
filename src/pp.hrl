@@ -115,6 +115,12 @@
 					game
 				 }).
 
+-define(CMD_PHOTO_QUERY, 102).
+
+-record(photo_query, {
+					player
+				 }).
+
 -define(CMD_PLAYER_QUERY, 15).
 
 -record(player_query, {
@@ -153,13 +159,18 @@
 					waiting
 				 }).
 
+-define(CMD_PHOTO_INFO, 101).
+
+-record(photo_info, {
+    player,
+    photo}).
+
 -define(CMD_PLAYER_INFO, 19).
 
 -record(player_info, {
 					player,
 					total_inplay, 
 					nick,
-          photo,
 					location
 				 }).
 

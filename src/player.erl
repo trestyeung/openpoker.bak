@@ -208,8 +208,27 @@ handle_cast(#player_query{ player = Pid }, Data) ->
           player = PID,
           total_inplay = inplay(Data),
           nick = Info#tab_player_info.nick,
-          photo = Info#tab_player_info.photo,
           location = Info#tab_player_info.location
+        }, Data);
+    _ ->
+      ?LOG([{db_read_player_info, oops}]),
+      oops
+  end,
+  {noreply, Data};
+
+handle_cast(#photo_query{ player = Pid }, Data) ->
+  ?LOG([{photo_query, player, Pid}, {loop_data, Data}]),
+  PID = case self() == Pid of
+    true ->
+      Data#pdata.pid;
+    _ ->
+      gen_server:call(Pid, 'ID')
+  end,
+  case db:read(tab_player_info, PID) of
+    [Info] ->
+      handle_cast(_ = #photo_info{
+          player = PID,
+          photo = Info#tab_player_info.photo
         }, Data);
     _ ->
       ?LOG([{db_read_player_info, oops}]),
@@ -251,6 +270,7 @@ handle_cast(R, Data)
   when is_record(R, seat_state);
 is_record(R, bet_req);
 is_record(R, player_info);
+is_record(R, photo_info);
 is_record(R, game_stage);
 is_record(R, notify_start_game);
 is_record(R, notify_end_game);

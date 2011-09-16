@@ -1246,5 +1246,5 @@ init() ->
   player:create("1000", "pass", "5b635bee55S3", "5Lit5Zu9", 1000),
   player:create("1001", "pass", "6LWM56We", "5YyX5Lqs", 1000),
   player:create("1002", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000),
+  player:update_photo(1, <<"XXXXXXXXXX">>),
   server:start().
-  
