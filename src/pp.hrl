@@ -156,7 +156,8 @@
 					seat_count,
 					required,
 					joined,
-					waiting
+					waiting,
+          game_count
 				 }).
 
 -define(CMD_PHOTO_INFO, 101).

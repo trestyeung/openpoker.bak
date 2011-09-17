@@ -115,6 +115,9 @@ rigged_deck() ->
 seat_count() ->
     int(). % XXX byte()
 
+game_count() ->
+    int(). % XXX byte()
+
 required_players() ->
     int(). % XXX byte()
 
@@ -437,7 +440,8 @@ game_info() ->
              seat_count(),
              required_players(),
              joined_players(),
-             waiting_players()
+             waiting_players(),
+             game_count()
             }).
 
 photo_info() ->

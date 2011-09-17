@@ -307,12 +307,13 @@ parse_packet(_Socket, Event, Client) ->
 %%% Utility
 %%% {{{ 
 
-send_games(_, []) ->
+send_games(_, [], _) ->
     ok;
 
-send_games(Socket, [H|T]) ->
-    ?tcpsend(Socket, H),
-    send_games(Socket, T).
+send_games(Socket, [H|T], C) ->
+    N = H#game_info{game_count = C},
+    ?tcpsend(Socket, N),
+    send_games(Socket, T, C).
 
 find_games(Socket, 
            GameType, LimitType,
@@ -323,7 +324,8 @@ find_games(Socket,
                          ExpOp, Expected, 
                          JoinOp, Joined,
                          WaitOp, Waiting),
-    send_games(Socket, L).
+    
+    send_games(Socket, L, lists:flatlength(L)).
 
 start_games() ->
     {atomic, Games} = db:find(tab_game_config),
