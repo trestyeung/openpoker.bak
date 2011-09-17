@@ -163,7 +163,8 @@
 
 -record(photo_info, {
     player,
-    photo}).
+    photo,
+    nick}).
 
 -define(CMD_PLAYER_INFO, 19).
 

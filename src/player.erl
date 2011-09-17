@@ -234,7 +234,8 @@ handle_cast(#photo_query{ player = PID }, Data) ->
     [Info] ->
       handle_cast(_ = #photo_info{
           player = Pid,
-          photo = Info#tab_player_info.photo
+          photo = Info#tab_player_info.photo,
+          nick = Info#tab_player_info.nick
         }, Data);
     _ ->
       ?LOG([{db_read_player_info, oops}]),

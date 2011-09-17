@@ -736,6 +736,7 @@ seat_query(_Game, 0, Acc) ->
 
 seat_query(Game, SeatNum, Acc) ->
     Seat = element(SeatNum, Game#game.seats),
+    ?LOG([{seat_query, {player, Seat#seat.pid}}]),
     SeatState = #seat_state{
       game = Game#game.gid,
       seat = SeatNum,

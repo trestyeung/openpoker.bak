@@ -443,7 +443,8 @@ game_info() ->
 photo_info() ->
   record(photo_info, {
     player(),
-    photo()
+    photo(),
+    nick()
   }).
 
 player_info() ->
