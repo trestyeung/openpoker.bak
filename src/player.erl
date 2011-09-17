@@ -194,40 +194,46 @@ handle_cast(#seat_query{ game = Game }, Data) ->
     lists:foreach(F, L),
     {noreply, Data};
 
-handle_cast(#player_query{ player = Pid }, Data) ->
-  ?LOG([{player_query, player, Pid}, {loop_data, Data}]),
-  PID = case self() == Pid of
-    true ->
-      Data#pdata.pid;
+handle_cast(#player_query{ player = PID }, Data) ->
+  ?LOG([{player_query, player, PID}, {loop_data, Data}]),
+
+  Self = self(),
+
+  case PID of 
+    Self ->
+      case db:read(tab_player_info, Data#pdata.pid) of
+        [Info] ->
+          handle_cast(_ = #player_info{
+              player = Data#pdata.pid,
+              total_inplay = inplay(Data),
+              nick = Info#tab_player_info.nick,
+              location = Info#tab_player_info.location
+            }, Data);
+        _ ->
+          oops
+      end;
     _ ->
-      gen_server:call(Pid, 'ID')
-  end,
-  case db:read(tab_player_info, PID) of
-    [Info] ->
-      handle_cast(_ = #player_info{
-          player = PID,
-          total_inplay = inplay(Data),
-          nick = Info#tab_player_info.nick,
-          location = Info#tab_player_info.location
-        }, Data);
-    _ ->
-      ?LOG([{db_read_player_info, oops}]),
-      oops
+      opps
   end,
   {noreply, Data};
 
-handle_cast(#photo_query{ player = Pid }, Data) ->
-  ?LOG([{photo_query, player, Pid}, {loop_data, Data}]),
-  PID = case self() == Pid of
-    true ->
+handle_cast(#photo_query{ player = PID }, Data) ->
+  ?LOG([{photo_query, player, PID}, {loop_data, Data}]),
+  Self = self(),
+
+  Pid = case PID of
+    undefined ->
+      opps;
+    Self ->
       Data#pdata.pid;
     _ ->
-      gen_server:call(Pid, 'ID')
+      gen_server:call(PID, 'ID')
   end,
-  case db:read(tab_player_info, PID) of
+
+  case db:read(tab_player_info, Pid) of
     [Info] ->
       handle_cast(_ = #photo_info{
-          player = PID,
+          player = Pid,
           photo = Info#tab_player_info.photo
         }, Data);
     _ ->

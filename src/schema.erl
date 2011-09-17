@@ -148,7 +148,7 @@ populate() ->
   g:setup(?GT_TEXAS_HOLDEM, 5, 
           #limit{ type = ?LT_NO_LIMIT, low = 10, high = 20 },
           ?START_DELAY, ?PLAYER_TIMEOUT, 
-          10).
+          2).
 
 populate(_) ->
     g:setup(?GT_IRC_TEXAS, 20, 
