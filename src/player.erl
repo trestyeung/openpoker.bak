@@ -42,7 +42,8 @@
           playing = gb_trees:empty(),
           watching = gb_trees:empty(),          
           zombie = 0, % % on autoplay until game ends
-          self
+          self,
+          nick = undefined
          }).
 
 start(Usr) 
@@ -190,7 +191,14 @@ handle_cast(R, Data)
 
 handle_cast(#seat_query{ game = Game }, Data) ->
     L = gen_server:call(Game, 'SEAT QUERY'),
-    F = fun(R) -> forward_to_client(R, Data) end,
+    F = fun(R) -> 
+        Player = pp:id_to_player(R#seat_state.player),
+        Nick = get_nick(Player, Data),
+            
+        ?LOG([{seat_query_result, {result, R}, {nick, Nick}}]),
+        
+        forward_to_client(R#seat_state{ nick = Nick }, Data) 
+    end,
     lists:foreach(F, L),
     {noreply, Data};
 
@@ -199,7 +207,7 @@ handle_cast(#player_query{ player = PID }, Data) ->
 
   Self = self(),
 
-  case PID of 
+  NewData = case PID of 
     Self ->
       case db:read(tab_player_info, Data#pdata.pid) of
         [Info] ->
@@ -208,14 +216,15 @@ handle_cast(#player_query{ player = PID }, Data) ->
               total_inplay = inplay(Data),
               nick = Info#tab_player_info.nick,
               location = Info#tab_player_info.location
-            }, Data);
+            }, Data),
+          Data#pdata{ nick = Info#tab_player_info.nick };
         _ ->
-          oops
+          Data
       end;
     _ ->
-      opps
+      Data
   end,
-  {noreply, Data};
+  {noreply, NewData};
 
 handle_cast(#photo_query{ player = PID }, Data) ->
   ?LOG([{photo_query, player, PID}, {loop_data, Data}]),
@@ -234,8 +243,7 @@ handle_cast(#photo_query{ player = PID }, Data) ->
     [Info] ->
       handle_cast(_ = #photo_info{
           player = Pid,
-          photo = Info#tab_player_info.photo,
-          nick = Info#tab_player_info.nick
+          photo = Info#tab_player_info.photo
         }, Data);
     _ ->
       ?LOG([{db_read_player_info, oops}]),
@@ -310,6 +318,9 @@ handle_cast(Event, Data) ->
 
 handle_call('ID', _From, Data) ->
     {reply, Data#pdata.pid, Data};
+
+handle_call('NICK QUERY', _From, Data) ->
+    {reply, Data#pdata.nick, Data};
 
 handle_call('SOCKET', _From, Data) ->
     {reply, Data#pdata.socket, Data};
@@ -429,6 +440,17 @@ leave_games(Data, [Game|Rest]) ->
                             player = self()
                            }),
     leave_games(Data, Rest).
+
+get_nick(Player, Data) when is_pid(Player) ->
+  case Player == self() of
+    true ->
+      Data#pdata.nick;
+    _ ->
+      gen_server:call(Player, 'NICK QUERY')
+  end;
+  
+get_nick(_, _) ->
+  undefined.
 
 %% delete_balance(PID) ->
 %%     db:delete(tab_balance, PID).

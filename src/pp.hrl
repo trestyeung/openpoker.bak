@@ -164,8 +164,7 @@
 
 -record(photo_info, {
     player,
-    photo,
-    nick}).
+    photo}).
 
 -define(CMD_PLAYER_INFO, 19).
 
@@ -255,7 +254,8 @@
 					seat,
 					state,
 					player,
-					inplay
+					inplay,
+          nick
 				 }).
 
 -define(CMD_YOU_ARE, 31).

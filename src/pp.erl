@@ -447,8 +447,7 @@ game_info() ->
 photo_info() ->
   record(photo_info, {
     player(),
-    photo(),
-    nick()
+    photo()
   }).
 
 player_info() ->
@@ -545,7 +544,8 @@ seat_state() ->
              seat(),
              state(),
              player(),
-             amount()
+             amount(),
+             nick()
             }).
 
 you_are() ->
