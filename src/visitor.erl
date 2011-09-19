@@ -93,7 +93,7 @@ handle_cast(#player_query{ player = PID }, Data) ->
                           player = Player#tab_player.process, 
                           total_inplay = 0.0,
                           nick = Info#tab_player_info.nick,
-                          location = Info#tab_player_info.location
+                          photo = ".def_photo_0"
                          }, Data);
         _ ->
             oops

@@ -43,7 +43,8 @@
           watching = gb_trees:empty(),          
           zombie = 0, % % on autoplay until game ends
           self,
-          nick = undefined
+          nick = undefined,
+          photo = undefined
          }).
 
 start(Usr) 
@@ -215,9 +216,9 @@ handle_cast(#player_query{ player = PID }, Data) ->
               player = Data#pdata.pid,
               total_inplay = inplay(Data),
               nick = Info#tab_player_info.nick,
-              location = Info#tab_player_info.location
+              photo = Info#tab_player_info.photo
             }, Data),
-          Data#pdata{ nick = Info#tab_player_info.nick };
+          Data#pdata{ nick = Info#tab_player_info.nick, photo = Info#tab_player_info.photo };
         _ ->
           Data
       end;
@@ -228,27 +229,9 @@ handle_cast(#player_query{ player = PID }, Data) ->
 
 handle_cast(#photo_query{ player = PID }, Data) ->
   ?LOG([{photo_query, player, PID}, {loop_data, Data}]),
-  Self = self(),
-
-  Pid = case PID of
-    undefined ->
-      opps;
-    Self ->
-      Data#pdata.pid;
-    _ ->
-      gen_server:call(PID, 'ID')
-  end,
-
-  case db:read(tab_player_info, Pid) of
-    [Info] ->
-      handle_cast(_ = #photo_info{
-          player = Pid,
-          photo = Info#tab_player_info.photo
-        }, Data);
-    _ ->
-      ?LOG([{db_read_player_info, oops}]),
-      oops
-  end,
+  Photo = get_photo(PID, Data),
+  Pid = get_pid(PID, Data),
+  handle_cast(_ = #photo_info{ player = Pid, photo = Photo }, Data),
   {noreply, Data};
 
 handle_cast(R = #start_game{}, Data) ->
@@ -321,6 +304,9 @@ handle_call('ID', _From, Data) ->
 
 handle_call('NICK QUERY', _From, Data) ->
     {reply, Data#pdata.nick, Data};
+
+handle_call('PHOTO QUERY', _From, Data) ->
+    {reply, Data#pdata.photo, Data};
 
 handle_call('SOCKET', _From, Data) ->
     {reply, Data#pdata.socket, Data};
@@ -452,6 +438,27 @@ get_nick(Player, Data) when is_pid(Player) ->
 get_nick(_, _) ->
   undefined.
 
+get_pid(Player, Data) when is_pid(Player) ->
+  case Player == self() of
+    true ->
+      Data#pdata.pid;
+    _ ->
+      gen_server:call(Player, 'ID')
+  end;
+  
+get_pid(_, _) ->
+  undefined.
+
+get_photo(Player, Data) when is_pid(Player) ->
+  case Player == self() of
+    true ->
+      Data#pdata.photo;
+    _ ->
+      gen_server:call(Player, 'PHOTO QUERY')
+  end;
+  
+get_photo(_, _) ->
+  undefined.
 %% delete_balance(PID) ->
 %%     db:delete(tab_balance, PID).
 

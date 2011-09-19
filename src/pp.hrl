@@ -172,7 +172,7 @@
 					player,
 					total_inplay, 
 					nick,
-					location
+				  photo	
 				 }).
 
 -define(CMD_BET_REQ, 20).

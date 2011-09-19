@@ -455,7 +455,7 @@ player_info() ->
              player(),
              total_inplay_amount(), 
              nick(),
-             location()
+             photo()
             }).
 
 bet_req() ->
