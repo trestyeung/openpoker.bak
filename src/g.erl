@@ -251,6 +251,7 @@ reset_hands(Seats, Count) ->
     reset_hands(Seats1, Count - 1).
 
 join(Game, R) ->
+  ?LOG([{game, Game}, {join, R}]),
     Seats = Game#game.seats,
     XRef = Game#game.xref,
     Seat = element(R#join.seat, Seats),
