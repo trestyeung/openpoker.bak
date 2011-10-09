@@ -260,8 +260,8 @@ process_event(Client, _Socket, Event) ->
   gen_server:cast(Client1#client.player, Event),
   Client1. %% }}}
 
-parse_packet(_Socket, tcp_closed, Client) ->
-  gen_server:cast(Client#client.player, 'DISCONNECT');
+parse_packet(Socket, tcp_closed, Client) ->
+  process_logout(Client, Socket);
 
 parse_packet(Socket, {packet, Packet}, Client) ->
   ok = ?tcpsend(Socket, Packet),

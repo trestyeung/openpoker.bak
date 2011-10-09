@@ -143,6 +143,7 @@ handle_cast(R = #unwatch{}, Data) ->
     end;
 
 handle_cast(#logout{}, Data) ->
+  ?LOG([{logout, {playing, Data#pdata.playing}}]),
     case gb_trees:is_empty(Data#pdata.playing) of
         true ->
             %% not playing anymore, can log out
