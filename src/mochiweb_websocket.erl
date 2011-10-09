@@ -44,7 +44,6 @@ start(Host, Port, Loop) ->
 
 stop(Port) ->
   Name = port_name(Port),
-  io:format("mochiweb_websocket stop ~p~n", [Name]),
   mochiweb_socket_server:stop(Name).
 
 start(Options) ->

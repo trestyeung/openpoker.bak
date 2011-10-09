@@ -478,3 +478,39 @@ PID posts a bet.
 1 - Login error, bad nick or password.
 2 - Account locked out, contact poker room administration.
 3 - START_GAME disabled.
+
+
+
+*** 协议添加步骤 ***
+
+1. 添加pp.hrl中对应的命令宏定义以及记录定义
+-define(CMD_NOTIFY_GAME_DETAIL, 81).
+-record(notify_game_detail, {
+    game,
+    amount,
+    stage
+  }).
+
+2. 添加pp.erl中对应的解析方法
+notify_game_detail() ->
+  record(notify_game_detail, { #此处record名称与结构需与pp.hrl中定义的相同
+      game(),
+      amount(),
+      stage()
+    }).
+
+3. 添加对应的write与read方法
+write(R) when is_record(R, notify_game_detail) ->
+  [?CMD_NOTIFY_GAME_DETAIL | pickle(notify_game_detail(), R)];
+
+read(<<?CMD_NOTIFY_GAME_DETAIL, Bin/binary>>) ->
+  unpickle(notify_game_detail(), Bin);
+
+
+*** Game Detail 对游戏观战后通知客户端 ***
+
+NOTIFY_GAME_DETAIL
+0    1     5     9       10
++----+-----+-----+-------+
+| 80 | GID | Pot | Stage | 
++----+-----+-----+-------+

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p ebin
 erl -make
 cd ebin
 rm -rf Mnesia*

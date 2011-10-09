@@ -359,6 +359,15 @@
 					proc % internal
 				 }).
 
+-define(CMD_NOTIFY_GAME_DETAIL, 81).
+
+-record(notify_game_detail, {
+    game,
+    amount,
+    stage
+  }).
+
+
 -define(CMD_TOURNEY_WATCH, 46).
 
 -record(tourney_watch, {
