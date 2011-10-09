@@ -78,7 +78,6 @@ terminate(_Reason, Data) ->
     ok = db:delete(tab_player, Data#pdata.pid).
 
 handle_cast('DISCONNECT', Data) ->
-  ?LOG([{player, self()}, {disconnect}]),
   {noreply, Data};
 
 handle_cast({'SOCKET', Socket}, Data) ->
@@ -200,17 +199,13 @@ handle_cast(#seat_query{ game = Game }, Data) ->
     F = fun(R) -> 
         Player = pp:id_to_player(R#seat_state.player),
         Nick = get_nick(Player, Data),
-        %?LOG([{seat_query_result, {result, R}, {nick, Nick}}]),
         forward_to_client(R#seat_state{ nick = Nick }, Data) 
     end,
     lists:foreach(F, L),
     {noreply, Data};
 
 handle_cast(#player_query{ player = PID }, Data) ->
-  ?LOG([{player_query, player, PID}, {loop_data, Data}]),
-
   Self = self(),
-
   NewData = case PID of 
     Self ->
       case db:read(tab_player_info, Data#pdata.pid) of
@@ -231,7 +226,6 @@ handle_cast(#player_query{ player = PID }, Data) ->
   {noreply, NewData};
 
 handle_cast(#photo_query{ player = PID }, Data) ->
-  ?LOG([{photo_query, player, PID}, {loop_data, Data}]),
   Photo = get_photo(PID, Data),
   Pid = get_pid(PID, Data),
   handle_cast(_ = #photo_info{ player = Pid, photo = Photo }, Data),
@@ -288,7 +282,6 @@ is_record(R, show_cards);
 is_record(R, notify_button);
 is_record(R, notify_sb);
 is_record(R, notify_bb) ->
-  %?LOG([{forward_to_client, R, Data}]),
   forward_to_client(R, Data),
   {noreply, Data};
 
@@ -471,7 +464,6 @@ get_photo(_, _) ->
 forward_to_client(Event, Data) ->    
   if 
     Data#pdata.socket /= none ->
-      %?LOG([{forward_to_client, {socket, Data#pdata.socket}, {event, Event}, {data, Data}}]),
       Data#pdata.socket ! {packet, Event};
     true ->
       ok

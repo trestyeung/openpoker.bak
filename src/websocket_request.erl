@@ -52,13 +52,11 @@ unmask_data([H|T], MaskKey, Index, Result) ->
   unmask_data(T, MaskKey, Index + 1, [Unmask|Result]).
 
 send(Msg, Size) when Size =< 125 ->
-  ?LOG([{msg_size, Size}, {msg, Msg}]),
   %%       FIN  RSV  OPCODE  MASK  SIZE    DATA
   Data = <<1:1, 0:3, 1:4,    0:1,  Size:7, Msg/binary>>,
   gen_tcp:send(Socket, Data);
 
 send(Msg, Size) ->
-  ?LOG([{msg_size, Size}, {msg, Msg}]),
   %%       FIN  RSV  OPCODE  MASK  SIZE            DATA
   Data = <<1:1, 0:3, 1:4,    0:1,  126:7, Size:16, Msg/binary>>,
   gen_tcp:send(Socket, Data).

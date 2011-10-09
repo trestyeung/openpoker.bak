@@ -197,7 +197,6 @@ code_change(_OldVsn, Server, _Extra) ->
 process_login(Client, Socket, Usr, Pass) -> %% {{{ socket connection processer
   case login:login(Usr, Pass, self()) of
     {error, Error} ->
-      ?LOG([{error, Error}]),
       ok = ?tcpsend(Socket, #bad{ cmd = ?CMD_LOGIN, error = Error}),
       Client;
     {ok, Player} ->
@@ -239,7 +238,6 @@ process_test_start_game(Client, Socket, R) ->
 
 process_game_query(Client, Socket, Q) 
   when is_record(Q, game_query) ->
-    ?LOG([{process_game_query, {game_query, Q}}]),
     find_games(Socket, 
                Q#game_query.game_type, 
                Q#game_query.limit_type,

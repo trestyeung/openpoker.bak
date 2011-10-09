@@ -94,14 +94,12 @@ login(Info, Player, account_disabled, _) ->
     {Info, Player, {error, ?ERR_ACCOUNT_DISABLED}};
 
 login(Info, Player, player_online, Args) ->
-  ?LOG([{login, player_online}, {info, Info}, {player, Player}]),
   %% player is idle
   gen_server:cast(Player#tab_player.process, #logout{}),
   timer:sleep(100),
   login(Info, Player, player_offline, Args);
 
 login(Info, Player, client_down, [_, _, Socket]) ->
-  ?LOG([{login, client_down}, {info, Info}, {player, Player}]),
   %% tell player process to talk to the new socket
   gen_server:cast(Player#tab_player.process, {'SOCKET', Socket}),
   Player1 = Player#tab_player{ socket = Socket },
@@ -111,7 +109,6 @@ login(Info, Player, player_busy, Args) ->
   login(Info, Player, client_down, Args);
 
 login(Info, Player, player_offline, [Usr, _, Socket]) ->
-  ?LOG([{login, player_offline}, {info, Info}, {player, Player}]),
   %% start player process
   {ok, Pid} = player:start(Usr),
   ID = gen_server:call(Pid, 'ID'),
