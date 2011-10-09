@@ -159,13 +159,17 @@ handle_cast(#logout{}, Data) ->
 handle_cast(R = #join{ game = Game }, Data) ->
   R1 = R#join{ player = self(), pid = Data#pdata.pid },
   ?LOG([{player_join, {game, Game}, {data, Data#pdata.watching}}]),
-  case gb_trees:is_defined(Game, Data#pdata.watching) of
+  Data1 = case gb_trees:is_defined(Game, Data#pdata.watching) of
     true ->
-      gen_server:cast(Game, R1);
+      gen_server:cast(Game, R1),
+      Data;
     _ ->
-      oops
+      gen_server:cast(Game, #watch{ game = R#join.game, player = self() }),
+      Watching = gb_trees:enter(Game, 1, Data#pdata.watching),
+      gen_server:cast(Game, R1),
+      Data#pdata{ watching = Watching }
   end,
-  {noreply, Data};
+  {noreply, Data1};
 
 handle_cast(R, Data) 
   when is_record(R, wait_bb);
@@ -196,9 +200,7 @@ handle_cast(#seat_query{ game = Game }, Data) ->
     F = fun(R) -> 
         Player = pp:id_to_player(R#seat_state.player),
         Nick = get_nick(Player, Data),
-            
-        ?LOG([{seat_query_result, {result, R}, {nick, Nick}}]),
-        
+        %?LOG([{seat_query_result, {result, R}, {nick, Nick}}]),
         forward_to_client(R#seat_state{ nick = Nick }, Data) 
     end,
     lists:foreach(F, L),
