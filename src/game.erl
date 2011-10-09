@@ -68,8 +68,9 @@ stop(Game)
 %%% Watch the game without joining
 
 dispatch(R = #watch{}, Game) ->
-    Obs = Game#game.observers,
-    Game#game{ observers = [R#watch.player|Obs] };
+  Obs = Game#game.observers,
+  gen_server:cast(R#watch.player, #notify_game_detail{ game = Game#game.gid, amount = 100.00, stage = ?}),
+  Game#game{ observers = [R#watch.player|Obs] };
 
 dispatch(R = #unwatch{}, Game) ->
     Obs = Game#game.observers,
