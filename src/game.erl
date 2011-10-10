@@ -68,8 +68,13 @@ stop(Game)
 %%% Watch the game without joining
 
 dispatch(R = #watch{}, Game) ->
+  Players = g:get_seats(Game, ?PS_ANY),
   Obs = Game#game.observers,
-  gen_server:cast(R#watch.player, #notify_game_detail{ game = Game#game.gid, amount = 100.00, stage = ?}),
+  Detail = #notify_game_detail{ 
+    game = Game#game.gid, 
+    pot = pot:total(Game#game.pot),
+    players = length(Players)},
+  gen_server:cast(R#watch.player, Detail),
   Game#game{ observers = [R#watch.player|Obs] };
 
 dispatch(R = #unwatch{}, Game) ->
@@ -111,7 +116,10 @@ call('SEAT QUERY', Game) ->
 
 call({'INPLAY', Player}, Game) ->
     {_, Seat} = g:get_seat(Game, Player),
-    Seat#seat.inplay.
+    Seat#seat.inplay;
+
+call('DEBUG', Game) ->
+  Game.
 
 %%%
 %%% Utility

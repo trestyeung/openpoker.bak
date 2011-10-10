@@ -157,7 +157,6 @@ handle_cast(#logout{}, Data) ->
 
 handle_cast(R = #join{ game = Game }, Data) ->
   R1 = R#join{ player = self(), pid = Data#pdata.pid },
-  ?LOG([{player_join, {game, Game}, {data, Data#pdata.watching}}]),
   Data1 = case gb_trees:is_defined(Game, Data#pdata.watching) of
     true ->
       gen_server:cast(Game, R1),

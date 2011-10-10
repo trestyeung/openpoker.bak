@@ -4,7 +4,7 @@ mkdir -p ebin
 erl -make
 cd ebin
 rm -rf Mnesia*
-erl -sname test -run test init
+erl -sname test -run sim init
 cd ..
 
 

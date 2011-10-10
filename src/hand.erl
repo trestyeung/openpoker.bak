@@ -59,17 +59,17 @@ rank(Hand) ->
                ], make_rep(Hand)).
 
 rank(Hand, [Rank|T], Rep) ->
-    case Rank(Hand, Rep) of
-  none ->
+  case Rank(Hand, Rep) of
+    none ->
       rank(Hand, T, Rep);
-  Hand1 ->
-            Hand1
-    end;
+    Hand1 ->
+      Hand1
+  end;
 
 rank(Hand, [], Rep) ->
-    Mask = make_mask(Rep),
-    High = bits:clear_extra_bits(Mask, 5),
-    Hand#hand{ rank = ?HC_HIGH_CARD, high1 = High, score = 0 }.
+  Mask = make_mask(Rep),
+  High = bits:clear_extra_bits(Mask, 5),
+  Hand#hand{ rank = ?HC_HIGH_CARD, high1 = High, score = 0 }.
 
 is_straight_flush(Hand, Rep) ->
     Mask = make_mask(Rep),
@@ -281,7 +281,7 @@ make_card({F, S}) ->
          four -> ?CF_FOUR;
          five -> ?CF_FIVE;
          six -> ?CF_SIX;
-               seven -> ?CF_SEVEN;
+         seven -> ?CF_SEVEN;
          eight -> ?CF_EIGHT;
          nine -> ?CF_NINE;
          ten -> ?CF_TEN;

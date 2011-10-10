@@ -363,8 +363,8 @@
 
 -record(notify_game_detail, {
     game,
-    amount,
-    stage
+    pot,
+    players
   }).
 
 

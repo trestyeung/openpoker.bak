@@ -619,7 +619,7 @@ notify_game_detail() ->
   record(notify_game_detail, {
       game(),
       amount(),
-      stage()
+      seat_count()
     }).
 
 tourney_query() ->
