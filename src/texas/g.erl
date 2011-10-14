@@ -808,6 +808,6 @@ core_texas_mods() ->
     ].
      
 texas_holdem_mods(StartDelay) ->
-    [ {game_wait_players, [StartDelay]} ] 
+    [ {wait_players, [StartDelay]} ] 
         ++ core_texas_mods() 
         ++ [ {restart, []} ].

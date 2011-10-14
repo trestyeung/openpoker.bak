@@ -18,51 +18,47 @@
 %%%% http://creativecommons.org/licenses/by-nc-sa/3.0/us/
 %%%%
 
--module(game_start).
+-module(wait_players).
 
--export([start/3, game_start/3]).
+-export([start/3, wait_for_players/3]).
 
 -include("texas.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
--define(DELAY, 15000).
-
-start(Game, Ctx, [Barrier]) ->
-    process_flag(trap_exit, true),
-    link(Barrier),
-    Game1 = Game#game{ barrier = Barrier },
-    Game2 = g:restart_timer(Game1, ?DELAY),
+start(Game, Ctx, [Delay]) ->
+    Game1 = g:restart_timer(Game, Delay),
     %% reset call amount
-    Ctx1 = Ctx#texas{ call = 0 },    
-    {next, game_start, Game2, Ctx1}.
+    Ctx1 = Ctx#texas{ call = 0 },
+    {next, wait_for_players, Game1, Ctx1}.
 
-game_start(Game, Ctx, {timeout, _, _}) ->
+wait_for_players(Game, Ctx, {timeout, _, _}) ->
     Ready = g:get_seats(Game, ?PS_READY),
     ReqCount = Game#game.required_player_count,
-    Barrier = Game#game.barrier,
     Start = (length(Ready) >= ReqCount),
-    Game1 = if
-                Start ->
-                    barrier:bump(Barrier),
-                    g:cancel_timer(Game);
-                true ->
-                    g:notify_cancel_game(Game),
-                    g:restart_timer(Game, ?DELAY)
-            end,
-    {continue, Game1, Ctx};
+    Empty = g:is_empty(Game),
+    if
+        Start ->
+            Game1 = g:notify_start_game(Game),
+            {stop, Game1, Ctx};
+        Empty ->
+            {repeat, Game, Ctx};
+        true ->
+            Game1 = g:notify_cancel_game(Game),
+            {repeat, Game1, Ctx}
+    end;
 
-game_start(Game, Ctx, {'EXIT', Barrier, _})
-  when Barrier == Game#game.barrier ->
-    g:notify_start_game(Game),
-    {stop, Game, Ctx};
-
-game_start(Game, Ctx, R = #join{}) ->
+wait_for_players(Game, Ctx, R = #join{}) ->
     Game1 = g:join(Game, R#join { state = ?PS_PLAY }),
     {continue, Game1, Ctx};
 
-game_start(Game, Ctx, R = #leave{}) ->
+wait_for_players(Game, Ctx, R = #leave{}) ->
     Game1 = g:leave(Game, R#leave { state = ?PS_ANY }),
     {continue, Game1, Ctx};
 
-game_start(Game, Ctx, _) ->
+wait_for_players(Game, Ctx, R = #watch{}) ->
+  Game1 = g:watch(Game, Ctx, R),
+  {continue, Game1, Ctx};
+
+wait_for_players(Game, Ctx, _) ->
     {skip, Game, Ctx}.
 
