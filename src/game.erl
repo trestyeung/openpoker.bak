@@ -45,9 +45,6 @@ stop(Game)
 
 %%% Watch the game without joining
 
-dispatch(R = #watch{}, Game) ->
-  g:watch(Game, R);
-
 dispatch(R = #unwatch{}, Game) ->
     Obs = Game#game.observers,
     Game#game{ observers = lists:delete(R#unwatch.player, Obs) };
@@ -62,12 +59,7 @@ dispatch({'SET STATE', Player, State}, Game) ->
     change_state(Game, Player, State);
 
 dispatch(R, Game) ->    
-    error_logger:info_report([{module, ?MODULE}, 
-            {line, ?LINE},
-            {self, self()}, 
-            {message, R}
-                             ]),
-    Game.
+  ?LOG([{unknown_dispatch, {msg, R}, {game, Game}]).
     
 call('ID', Game) ->
     Game#game.gid;
