@@ -22,12 +22,8 @@
 
 -export([start/3, small_blind/3, big_blind/3]).
 
--include_lib("eunit/include/eunit.hrl").
-
--include("common.hrl").
 -include("texas.hrl").
--include("pp.hrl").
--include("game.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
 %% Theory
 

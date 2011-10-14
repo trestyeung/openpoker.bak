@@ -26,12 +26,8 @@
 
 -export([start/3, betting/3]).
 
--include_lib("eunit/include/eunit.hrl").
-
--include("common.hrl").
 -include("texas.hrl").
--include("pp.hrl").
--include("game.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
 start(Game, Ctx, [MaxRaises, Stage]) ->
     start(Game, Ctx, [MaxRaises, Stage, false]);

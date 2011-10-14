@@ -1,4 +1,4 @@
-%%% Copyright (C) 2005-2008 Wager Labs, SA
+%%%% Copyright (C) 2005-2008 Wager Labs, SA
 %%%%
 %%%% THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS 
 %%%% CREATIVE COMMONS PUBLIC LICENSE ("CCPL" OR "LICENSE"). THE WORK IS 
@@ -18,11 +18,20 @@
 %%%% http://creativecommons.org/licenses/by-nc-sa/3.0/us/
 %%%%
 
--module(restart).
+-module(fixed_limit).
+-behavior(limit).
 
--export([start/3]).
+-export([blinds/2, raise/5]).
 
-start(Game, Ctx, []) ->
-    {goto, top, Game, Ctx}.
+-include("texas.hrl").
 
+raise(Low, _, _, _, Stage) 
+  when ?GS_PREFLOP == Stage; 
+       ?GS_FLOP == Stage ->
+    {Low, Low};
 
+raise(_, High, _, _, _) ->
+    {High, High}.
+
+blinds(Low, _) ->
+    {Low / 2, Low}.

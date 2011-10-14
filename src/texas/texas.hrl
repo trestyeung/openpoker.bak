@@ -1,4 +1,8 @@
-%%% Copyright (C) 2005-2008 Wager Labs, SA
+-include("../common.hrl").
+-include("../pp.hrl").
+-include("../game.hrl").
+-include("../schema.hrl").
+-include("../lang.hrl").
 
 %%% Texas Hold'em game context 
 

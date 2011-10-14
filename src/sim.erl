@@ -6,7 +6,6 @@
 -include("common.hrl").
 -include("game.hrl").
 -include("pp.hrl").
--include("texas.hrl").
 -include("schema.hrl").
 
 init() ->

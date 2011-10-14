@@ -1,10 +1,3 @@
-%% 
-%% This is a wrapper around the mochiweb_socket_server.  It's based
-%% on 'mochiweb_http' but handles the WebSocket protocol.
-%% In this implementation there's no timeout set on reading from the socket so the
-%% client connection does not timeout.
-%% @author Dave Bryson [http://weblog.miceda.org]
-%%
 -module(mochiweb_websocket).
 
 -export([start/3, stop/1]).

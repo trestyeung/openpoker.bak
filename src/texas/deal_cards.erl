@@ -18,20 +18,21 @@
 %%%% http://creativecommons.org/licenses/by-nc-sa/3.0/us/
 %%%%
 
--module(fixed_limit).
--behavior(limit).
+-module(deal_cards).
 
--export([blinds/2, raise/5]).
+-export([start/3]).
 
--include("common.hrl").
+-include("texas.hrl").
 
-raise(Low, _, _, _, Stage) 
-  when ?GS_PREFLOP == Stage; 
-       ?GS_FLOP == Stage ->
-    {Low, Low};
+start(Game, Ctx, [N, Type]) ->
+    Ctx1 = Ctx#texas{ deal_type = Type, deal_count = N },
+    Game1 = case Type of
+                private ->
+                    B = Ctx1#texas.b,
+                    Seats = g:get_seats(Game, B, ?PS_STANDING),
+                    g:draw(Game, Seats, N);
+                shared ->
+                    g:draw_shared(Game, N)
+            end,
+    {stop, Game1, Ctx1}.
 
-raise(_, High, _, _, _) ->
-    {High, High}.
-
-blinds(Low, _) ->
-    {Low / 2, Low}.

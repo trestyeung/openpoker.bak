@@ -22,12 +22,8 @@
 
 -export([start/3]).
 
--include_lib("eunit/include/eunit.hrl").
-
--include("common.hrl").
--include("game.hrl").
 -include("texas.hrl").
--include("pp.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
 start(Game, Ctx, []) ->
     g:show_cards(Game, Ctx#texas.b),

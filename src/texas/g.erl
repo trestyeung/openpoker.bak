@@ -41,12 +41,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("stdlib/include/qlc.hrl").
 
--include("common.hrl").
--include("game.hrl").
--include("pp.hrl").
 -include("texas.hrl").
--include("lang.hrl").
--include("schema.hrl").
 
 make(R = #start_game{}) ->
     %% create a game stack. context is used to propagate 
@@ -805,13 +800,6 @@ core_texas_mods() ->
      {showdown, []}
     ].
      
-tourney_texas_mods(T) ->
-    [ {tourney_game_start, [T]},
-      {ante, []} ] 
-        ++ core_texas_mods() 
-        ++ [ {tourney_game_end, []},
-             {restart, []} ].
-    
 texas_holdem_mods(StartDelay) ->
     [ {game_wait_players, [StartDelay]} ] 
         ++ core_texas_mods() 
@@ -852,35 +840,3 @@ irc_texas_mods(StartDelay, Barrier) ->
             [{game_wait_players, [StartDelay]}|Mods]
                 ++ [{restart, []}]
     end.
-
-%% texas_tourney_config(StartDelay) ->
-%%     Modules = [
-%%                %% start delay
-%%                {game_wait_players, [StartDelay]}, 
-%%                %% blind rules
-%%                {blinds, []},
-%%                %% deal 2 cards to each player
-%%                {deal_cards, [2, private]}, 
-%%                %% start after BB, 3 raises
-%%                {betting, [?MAX_RAISES, ?GS_PREFLOP, true]}, 
-%%                %% show 3 shared cards
-%%                {deal_cards, [3, shared]}, 
-%%                %% flop
-%%                {betting, [?MAX_RAISES, ?GS_FLOP]}, 
-%%                %% show 1 more shared card
-%%                {deal_cards, [1, shared]}, 
-%%                %% turn
-%%                {betting, [?MAX_RAISES, ?GS_TURN]}, 
-%%                %% show 1 more shared card
-%%                {deal_cards, [1, shared]}, 
-%%                %% river
-%%                {betting, [?MAX_RAISES, ?GS_RIVER]}, 
-%%                %% showdown
-%%                {showdown, []},
-%%                {restart, []}
-%%               ],
-%%     _ = #game_config{
-%%       context = #texas{},
-%%       modules = Modules,
-%%       tourney = none
-%%      }.

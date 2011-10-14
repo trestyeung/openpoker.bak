@@ -22,10 +22,7 @@
 
 -export([start/3, game_start/3]).
 
--include("common.hrl").
--include("game.hrl").
 -include("texas.hrl").
--include("pp.hrl").
 
 -define(DELAY, 15000).
 

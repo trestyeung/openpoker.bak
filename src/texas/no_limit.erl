@@ -18,34 +18,20 @@
 %%%% http://creativecommons.org/licenses/by-nc-sa/3.0/us/
 %%%%
 
--module(ante).
+-module(no_limit).
+-behaviour(limit).
 
--export([start/3]).
+-export([raise/5, blinds/2]).
 
--include_lib("eunit/include/eunit.hrl").
-
--include("common.hrl").
 -include("texas.hrl").
--include("pp.hrl").
--include("game.hrl").
 
-start(Game, Ctx, []) ->
-    Game1 = g:reset_player_state(Game, ?PS_ANY, ?PS_PLAY),
-    Players = g:get_seats(Game1, ?PS_ACTIVE),
-    post_ante(Game1, Game1#game.ante, Players),
-    {stop, Game, Ctx}.
+raise(Low, _, _, Inplay, Stage)
+  when ?GS_PREFLOP == Stage ->
+    {Low, Inplay};
 
-post_ante(Game, _, []) ->
-    Game;
+raise(_, High, _, Inplay, _) ->
+    {High, Inplay}.
 
-post_ante(Game, Ante, [H|T]) ->
-    Seat = g:get_seat(Game, H),
-    Game1 = g:add_bet(Game, H, Ante),
-    R = #notify_raise{ 
-      game = Game1#game.gid, 
-      player = Seat#seat.pid,
-      raise = 0,
-      call = Ante
-     },
-    Game2 = g:broadcast(Game1, R),
-    post_ante(Game2, Ante, T).
+blinds(Low, High) ->
+    {Low, High}.
+

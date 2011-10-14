@@ -1,8 +1,3 @@
-%% @author Bob Ippolito <bob@mochimedia.com>
-%% @copyright 2007 Mochi Media, Inc.
-
-%% @doc MochiWeb socket server.
-
 -module(mochiweb_socket_server).
 -author('bob@mochimedia.com').
 -behaviour(gen_server).
