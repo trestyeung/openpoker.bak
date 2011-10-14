@@ -58,8 +58,8 @@ dispatch(R = #come_back{}, Game) ->
 dispatch({'SET STATE', Player, State}, Game) ->
     change_state(Game, Player, State);
 
-dispatch(R, Game) ->    
-  ?LOG([{unknown_dispatch, {msg, R}, {game, Game}]).
+dispatch(R, Game) ->
+  ?LOG([{unknown_dispatch, {msg, R}, {game, Game}}]).
     
 call('ID', Game) ->
     Game#game.gid;

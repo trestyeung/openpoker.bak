@@ -41,4 +41,3 @@ wait_for_players(Game, Ctx, R = #watch{}) ->
 
 wait_for_players(Game, Ctx, _) ->
     {skip, Game, Ctx}.
-

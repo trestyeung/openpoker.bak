@@ -230,6 +230,7 @@ watch(Game, Ctx, R) ->
     pot = pot:total(Game#game.pot),
     players = length(Players)},
   gen_server:cast(R#watch.player, Detail),
+  ?LOG([{watch_game, {game, Game}, {context, Ctx}, {msg, R}}]),
   Game#game{ observers = [R#watch.player|Obs] }.
 
 join(Game, R) ->

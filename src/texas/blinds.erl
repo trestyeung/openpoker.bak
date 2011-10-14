@@ -97,7 +97,7 @@ start(Game, Ctx, [Type]) ->
 
 small_blind(Game, Ctx, #raise{ player = Player }) 
   when Ctx#texas.exp_player /= Player ->
-    io:format("not our player!~n"),
+    ?LOG([{small_blind, {not_our_player}}]),
     {continue, Game, Ctx};
 
 small_blind(Game, Ctx, R = #raise{}) ->
