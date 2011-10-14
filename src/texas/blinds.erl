@@ -137,18 +137,15 @@ small_blind(Game, Ctx, #fold{}) ->
     Game1 = g:cancel_timer(Game),
     timeout(Game1, Ctx, small_blind);
 
-small_blind(Game, Ctx, R)
-  when is_record(R, join), Game#game.tourney /= none;
-is_record(R, join), Game#game.tourney /= none;
-is_record(R, sit_out), Game#game.tourney /= none;
-is_record(R, come_back), Game#game.tourney /= none ->
-    {skip, Game, Ctx};
-
 small_blind(Game, Ctx, R = #join{}) ->
     join(Game, Ctx, R);
 
 small_blind(Game, Ctx, R = #leave{}) ->
     leave(Game, Ctx, R, small_blind);
+
+small_blind(Game, Ctx, R = #watch{}) ->
+  Game1 = g:watch(Game, Ctx, R),
+  {continue, Game1, Ctx};
 
 small_blind(Game, Ctx, #sit_out{}) ->
     {skip, Game, Ctx};
@@ -196,13 +193,6 @@ big_blind(Game, Ctx, #fold{}) ->
     Game1 = g:cancel_timer(Game),
     timeout(Game1, Ctx, big_blind);
 
-big_blind(Game, Ctx, R)
-  when is_record(R, join), Game#game.tourney /= none;
-is_record(R, join), Game#game.tourney /= none;
-is_record(R, sit_out), Game#game.tourney /= none;
-is_record(R, come_back), Game#game.tourney /= none ->
-    {skip, Game, Ctx};
-
 big_blind(Game, Ctx, #sit_out{}) ->
     {skip, Game, Ctx};
 
@@ -227,6 +217,10 @@ big_blind(Game, Ctx, R = #join{}) ->
 
 big_blind(Game, Ctx, R = #leave{}) ->
     leave(Game, Ctx, R, big_blind);
+
+big_blind(Game, Ctx, R = #watch{}) ->
+  Game1 = g:watch(Game, Ctx, R),
+  {continue, Game1, Ctx};
 
 big_blind(Game, Ctx, R) ->
     report_unknown(Game, Ctx, R),

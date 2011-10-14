@@ -35,22 +35,19 @@
          add_bet/3, new_stage/1, reset_player_state/3,
          pot_size/1, draw/3, draw_shared/2, 
          inplay_plus/3, show_cards/2, rank_hands/1, 
-         pots/1, make/1, make/3
+         pots/1, make/1, make/3, watch/3
         ]).
 
+-include("texas.hrl").
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("stdlib/include/qlc.hrl").
 
--include("texas.hrl").
 
 make(R = #start_game{}) ->
     %% create a game stack. context is used to propagate 
     %% game information from module to module, e.g. button
     %% and blinds position for texas hold'em.
     Mods = case R#start_game.type of
-               ?GT_IRC_TEXAS ->
-                   irc_texas_mods(R#start_game.start_delay,
-                                  R#start_game.barrier);
                ?GT_TEXAS_HOLDEM ->
                    texas_holdem_mods(R#start_game.start_delay) 
            end,
@@ -244,6 +241,16 @@ reset_hands(Seats, Count) ->
                                         muck = false
                                        }),
     reset_hands(Seats1, Count - 1).
+
+watch(Game, Ctx, R) ->
+  Players = get_seats(Game, ?PS_ANY),
+  Obs = Game#game.observers,
+  Detail = #notify_game_detail{ 
+    game = Game#game.gid, 
+    pot = pot:total(Game#game.pot),
+    players = length(Players)},
+  gen_server:cast(R#watch.player, Detail),
+  Game#game{ observers = [R#watch.player|Obs] }.
 
 join(Game, R) ->
     Seats = Game#game.seats,
@@ -804,39 +811,3 @@ texas_holdem_mods(StartDelay) ->
     [ {game_wait_players, [StartDelay]} ] 
         ++ core_texas_mods() 
         ++ [ {restart, []} ].
-
-irc_texas_mods(StartDelay, Barrier) ->
-    %% irc texas differs slightly in application of button 
-    %% rules as well as the number of raises allowed
-    Mods = [
-            %% irc blind rules
-            {blinds, [irc]},
-            %% deal 2 cards to each player
-            {deal_cards, [2, private]}, 
-            %% start after BB, 100 raises
-            {betting, [100, ?GS_PREFLOP, true]}, 
-            %% show 3 shared cards
-            {deal_cards, [3, shared]}, 
-            %% flop
-            {betting, [100, ?GS_FLOP]}, 
-            %% show 1 more shared card
-            {deal_cards, [1, shared]}, 
-            %% turn
-            {betting, [100, ?GS_TURN]}, 
-            %% show 1 more shared card
-            {deal_cards, [1, shared]}, 
-            %% river
-            {betting, [100, ?GS_RIVER]}, 
-            %% showdown
-            {showdown, []}
-           ],
-    if 
-        is_pid(Barrier) ->
-            %% all games run together
-            [{game_start, [Barrier]}|Mods]
-                ++ [{delayed_exit, []}];
-        true ->
-            %% start delay
-            [{game_wait_players, [StartDelay]}|Mods]
-                ++ [{restart, []}]
-    end.
