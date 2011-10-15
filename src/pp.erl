@@ -94,6 +94,12 @@ rigged_deck() ->
 seat_count() ->
     int(). % XXX byte()
 
+seats() ->
+  byte().
+
+players() ->
+  byte().
+
 game_count() ->
     int(). % XXX byte()
 
@@ -598,7 +604,12 @@ notify_game_detail() ->
   record(notify_game_detail, {
       game(),
       amount(),
-      seat_count()
+      seats(),
+      players(),
+      optional(button()),
+      optional(sb()),
+      optional(bb()),
+      stage()
     }).
 
 tourney_query() ->

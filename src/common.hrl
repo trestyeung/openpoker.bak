@@ -43,6 +43,7 @@
 
 %%% Game stage
 
+-define(GS_CANCEL, 254).
 -define(GS_PREFLOP, 0).
 -define(GS_FLOP, 1).
 -define(GS_TURN, 2).

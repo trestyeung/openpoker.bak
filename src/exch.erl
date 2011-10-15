@@ -12,6 +12,7 @@
 
 -export([start/2, stop/1, cast/2, call/2]).
 
+-include("common.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 
@@ -79,14 +80,16 @@ init(Args = [Parent|_]) ->
     end.
 
 terminate(_, Exch) ->
-    Cbk:stop(Exch#exch.data),
-    ok.
+  ?LOG([{exch_terminate}]),
+  Cbk:stop(Exch#exch.data),
+  ok.
 
 handle_cast({'NOTE', Note}, Exch) ->
     {noreply, Exch#exch{ note = Note }};
 
 handle_cast(stop, Exch) ->
-    {stop, normal, Exch};
+  ?LOG([{exch_terminate, handle_stop}]),
+  {stop, normal, Exch};
 
 handle_cast(Event, Exch) ->
     process_cast(Event, Exch).
@@ -178,4 +181,3 @@ trim_stack(Mod, L = [{H, _}|_])
 
 trim_stack(Mod, [_|T]) ->
     trim_stack(Mod, T).
-

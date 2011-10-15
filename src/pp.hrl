@@ -364,7 +364,12 @@
 -record(notify_game_detail, {
     game,
     pot,
-    players
+    players,
+    seats,
+    button,
+    sblind,
+    bblind,
+    stage
   }).
 
 

@@ -225,12 +225,29 @@ reset_hands(Seats, Count) ->
 watch(Game, Ctx, R) ->
   Players = get_seats(Game, ?PS_ANY),
   Obs = Game#game.observers,
-  Detail = #notify_game_detail{ 
+
+  ?LOG([{watch_game, {game, Game}, {context, Ctx}, {msg, R}}]),
+
+  Detail = #notify_game_detail{
     game = Game#game.gid, 
     pot = pot:total(Game#game.pot),
-    players = length(Players)},
-  gen_server:cast(R#watch.player, Detail),
-  ?LOG([{watch_game, {game, Game}, {context, Ctx}, {msg, R}}]),
+    players = length(Players),
+    seats = size(Game#game.seats),
+    button = Ctx#texas.b,
+    sblind = Ctx#texas.sb,
+    bblind = Ctx#texas.bb,
+    stage = Ctx#texas.stage
+  },
+
+  Detail1 = case Detail#notify_game_detail.stage of
+    undefined ->
+      Detail#notify_game_detail{stage = ?GS_CANCEL};
+    true ->
+      Detail
+  end,
+
+  ?LOG([{watch_game, {detail, Detail1}}]),
+  gen_server:cast(R#watch.player, Detail1),
   Game#game{ observers = [R#watch.player|Obs] }.
 
 join(Game, R) ->

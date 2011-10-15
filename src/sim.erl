@@ -7,6 +7,7 @@
 -include("game.hrl").
 -include("pp.hrl").
 -include("schema.hrl").
+-include("texas/ctx.hrl").
 
 init() ->
   schema:install(),
@@ -62,8 +63,8 @@ dg(GID) when is_integer(GID) ->
 dg(GID) when is_pid(GID) ->
   gen_server:call(GID, 'DEBUG').
 
-watch(P,G) ->
-  gen_server:cast(P,#watch{game=G}).
+watch() ->
+  gen_server:cast(p(1),#watch{game=g(1)}).
 
 join(P,G) ->
   gen_server:cast(P, #join{game=G, seat=1, amount=100.0}).

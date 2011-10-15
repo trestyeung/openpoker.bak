@@ -158,9 +158,9 @@ handle_call(Event, From, Server) ->
                               {from, From}]),
     {noreply, Server}.
 
-handle_info({'EXIT', _Pid, _Reason}, Server) ->
-    %% child exit?
-    {noreply, Server};
+handle_info({'EXIT', Pid, Reason}, Server) ->
+  ?LOG([{server_error, {pid, Pid}, {reason, Reason}}]),
+  {noreply, Server};
 
 handle_info(Info, Server) ->
     error_logger:info_report([{module, ?MODULE}, 
