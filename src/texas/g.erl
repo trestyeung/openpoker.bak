@@ -112,14 +112,18 @@ notify_cancel_game(Game) ->
 
 broadcast_player_state(Game) ->
     L = seat_query(Game),
-    broadcast_player_state(Game, L).
+    F = fun(S) -> 
+        Player = pp:id_to_player(S#seat_state.player),
+        Nick = case is_pid(Player) of
+          true ->
+            gen_server:call(Player, 'NICK QUERY');
+          false ->
+            undefined
+        end,
 
-broadcast_player_state(_, []) ->
-    ok;
-
-broadcast_player_state(Game, [H|T]) ->
-    broadcast(Game, H),
-    broadcast_player_state(Game, T).
+        broadcast(Game, S#seat_state{ nick = Nick })
+    end,
+    lists:foreach(F, L).
 
 make_players(Game, Seats) ->
     make_players(Game, Seats, []).
@@ -585,16 +589,16 @@ draw(Game, SeatNum)
     Player = Seat#seat.player,
     Hand = hand:add(Seat#seat.hand, Card),
     Seats = setelement(SeatNum, Game#game.seats, Seat#seat{ hand = Hand }),
-    Draw = #notify_draw{ 
+    Private = #notify_private{ 
       game = Game#game.gid, 
       player = Seat#seat.pid, 
       card = Card },
-    gen_server:cast(Player, Draw),
-    broadcast(Game, Draw#notify_draw{ 
-                      game = Game#game.gid, 
-                      player = Seat#seat.pid,
-                      card = 0 
-                     }),
+    Draw = #notify_draw{ 
+      game = Game#game.gid, 
+      player = Seat#seat.pid, 
+      card = 0},
+    gen_server:cast(Player, Private),
+    broadcast(Game, Draw),
     Game#game{ seats = Seats, deck = Deck }.
 
 draw_shared(Game, 0) ->
