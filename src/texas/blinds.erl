@@ -89,6 +89,7 @@ start(Game, Ctx, [Type]) ->
             Seat = lists:last(SBPlayers),
             ask_for_blind(Game1, Ctx3, Seat, Amt, small_blind);
         true ->
+          ?LOG([{blind, {handsup, HeadsUp}, {button, Button1}}]),
             Ctx3 = Ctx2#texas{ b = Button1 },
             Amt = Ctx3#texas.sb_amt,
             Seat = hd(SBPlayers),
@@ -257,24 +258,26 @@ leave(Game, Ctx, R, State) ->
     {continue, Game1, Ctx}.
 
 advance_button(Game, Ctx) ->
-    B = Ctx#texas.b,
-    if
-        B == none ->
-            %% first hand of the game
-            %% start with the first player
-            Players = g:get_seats(Game, ?PS_ANY),
-            Button = lists:last(Players),
-            Bust = false;
-        true ->
-            %% start with the first 
-            %% player after the button
-            Players = g:get_seats(Game, B, ?PS_ANY),
-            Button = hd(Players),
-            %% big blind is bust
-            Seat = g:get_seat(Game, Ctx#texas.bb),
-            Bust = ?PS_FOLD == Seat#seat.state
-    end,
-    {Button, Bust}.
+  ?LOG([{advance_button, {b, Ctx#texas.b}}]),
+  B = Ctx#texas.b,
+  if
+    B == none ->
+      %% first hand of the game
+      %% start with the first player
+      Players = g:get_seats(Game, ?PS_ANY),
+      Button = lists:last(Players),
+      Bust = false;
+    true ->
+      %% start with the first 
+      %% player after the button
+      Players = g:get_seats(Game, B, ?PS_ANY),
+      Button = hd(Players),
+      ?LOG([{advance_button, {players, Players}, {button, Button}}]),
+      %% big blind is bust
+      Seat = g:get_seat(Game, Ctx#texas.bb),
+      Bust = ?PS_FOLD == Seat#seat.state
+  end,
+  {Button, Bust}.
 
 ask_for_blind(Game, Ctx, N, Amount, State) ->
   Seat = g:get_seat(Game, N),
@@ -353,10 +356,12 @@ post_bb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
     Seats = g:get_seats(Game, ?PS_ACTIVE),
     B = if
             (length(Seats) == 2) and (Ctx#texas.blind_type /= irc) ->
-                Ctx#texas.sb;
+              ?LOG([{post_bb, headsup_game}]),
+              Ctx#texas.sb;
             true ->
                 Ctx#texas.b
-        end,
+            end,
+            ?LOG([{post_bb, {ori, Ctx#texas.b}, {new, B}}]),
     Ctx1 = Ctx#texas{ 
              b = B, 
              bb = N, 
