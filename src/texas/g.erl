@@ -246,7 +246,7 @@ watch(Game, Ctx, R) ->
   Detail1 = case Detail#notify_game_detail.stage of
     undefined ->
       Detail#notify_game_detail{stage = ?GS_CANCEL};
-    true ->
+    _ ->
       Detail
   end,
 
