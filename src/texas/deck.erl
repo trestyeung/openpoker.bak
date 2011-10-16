@@ -7,6 +7,7 @@
 -export([new/0, new/1, reset/1, draw/1, test/0]).
 
 -include("texas.hrl").
+-compile([export_all]).
 
 -record(deck, {
           rigged,
@@ -17,10 +18,10 @@ new() ->
     new([]).
 
 new([]) ->
-    #deck{
-     rigged = [],
-     cards = shuffle(make_deck())
-    };
+  #deck{
+    rigged = [],
+    cards = shuffle(make_deck())
+  };
 
 new(Cards) ->
     #deck{
@@ -68,15 +69,10 @@ make_deck() ->
     [hand:make_card(Face, Suit) || Face <- L1, Suit <- L2].
 
 shuffle(Cards) ->
-    Temp = lists:map(fun(X) ->
-                             {random:uniform(1 bsl 64), X}
-                     end,
-                     Cards),
-    Temp1 = lists:keysort(1, Temp),
-    lists:map(fun(X) ->
-                      element(2, X)
-              end,
-              Temp1).
+  random:seed(now()),
+  Temp = lists:map(fun(X) -> {random:uniform(), X} end, Cards),
+  Temp1 = lists:keysort(1, Temp),
+  lists:map(fun(X) -> element(2, X) end, Temp1).
 
 test() ->
     ok.
