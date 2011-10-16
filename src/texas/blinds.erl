@@ -276,57 +276,30 @@ advance_button(Game, Ctx) ->
     end,
     {Button, Bust}.
 
-%%% force blinds in tournament mode
-
-ask_for_blind(Game, Ctx, N, Amount, State)
-  when Game#game.tourney /= none ->
-    Seat = g:get_seat(Game, N),
-    Player = Seat#seat.player,
-    Ctx1 = Ctx#texas{ 
-             exp_player = Player, 
-             exp_seat = N,
-             exp_amt = Amount
-            },
-    R = #raise{ player = Player, raise = 0.0 },
-    Game1 = g:cancel_timer(Game),
-    if
-        State == small_blind ->
-            g:broadcast(Game1, _ = #notify_sb{ 
-                                 game = Game1#game.gid, 
-                                 sb = N
-                                }),
-            post_sb(Game1, Ctx1, R);
-        true ->
-            g:broadcast(Game1, _ = #notify_bb{ 
-                                 game = Game1#game.gid, 
-                                 bb = N
-                                }),
-            post_bb(Game1, Ctx1, R)
-    end;
-
 ask_for_blind(Game, Ctx, N, Amount, State) ->
-    Seat = g:get_seat(Game, N),
-    Player = Seat#seat.player,
-    Game1 =  if
-                 State == small_blind ->
-                     g:broadcast(Game, _ = #notify_sb{ 
-                                         game = Game#game.gid, 
-                                         sb = N
-                                        });
-                 true ->
-                     g:broadcast(Game, _ = #notify_bb{ 
-                                         game = Game#game.gid, 
-                                         bb = N
-                                        })
-             end,
-    Game2 = g:request_bet(Game1, N, Amount, 0.0, 0.0),
-    Game3 = g:restart_timer(Game2, Game2#game.timeout),
-    Ctx1 = Ctx#texas{ 
-             exp_player = Player, 
-             exp_seat = N,
-             exp_amt = Amount
-            },
-    {next, State, Game3, Ctx1}.
+  Seat = g:get_seat(Game, N),
+  Player = Seat#seat.player,
+  Ctx1 = Ctx#texas{ 
+    exp_player = Player, 
+    exp_seat = N,
+    exp_amt = Amount
+  },
+  R = #raise{ player = Player, raise = 0.0 },
+  Game1 = g:cancel_timer(Game),
+  if
+    State == small_blind ->
+      g:broadcast(Game1, _ = #notify_sb{ 
+          game = Game1#game.gid, 
+          sb = N
+        }),
+      post_sb(Game1, Ctx1, R);
+    true ->
+      g:broadcast(Game1, _ = #notify_bb{ 
+          game = Game1#game.gid, 
+          bb = N
+        }),
+      post_bb(Game1, Ctx1, R)
+  end.
 
 report_unknown(_Game, _Ctx, R) ->
     error_logger:error_report([{module, ?MODULE}, 
