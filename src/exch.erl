@@ -79,8 +79,8 @@ init(Args = [Parent|_]) ->
             {ok, Exch1}
     end.
 
-terminate(_, Exch) ->
-  ?LOG([{exch_terminate}]),
+terminate(Reason, Exch) ->
+  ?LOG([{exch_terminate, {reason, Reason}, {exch, Exch}}]),
   Cbk:stop(Exch#exch.data),
   ok.
 
