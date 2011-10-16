@@ -192,6 +192,14 @@
 					card
 				 }).
 
+-define(CMD_NOTIFY_PRIVATE, 82).
+
+-record(notify_private, {
+					game, 
+					player,
+					card
+				 }).
+
 -define(CMD_NOTIFY_SHARED, 22).
 
 -record(notify_shared, {

@@ -250,6 +250,7 @@ is_record(R, notify_end_game);
 is_record(R, notify_cancel_game);
 is_record(R, notify_join);
 is_record(R, notify_draw);
+is_record(R, notify_private);
 is_record(R, notify_shared);
 is_record(R, notify_leave);
 is_record(R, notify_leave);

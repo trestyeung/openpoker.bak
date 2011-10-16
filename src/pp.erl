@@ -458,6 +458,13 @@ notify_draw() ->
              card()
             }).
 
+notify_private() ->
+    record(notify_private, {
+             game(), 
+             player(),
+             card()
+            }).
+
 notify_shared() ->
     record(notify_shared, {
              game(),
@@ -733,6 +740,9 @@ write(R) when is_record(R, bet_req) ->
 write(R) when is_record(R, notify_draw) ->
     [?CMD_NOTIFY_DRAW|pickle(notify_draw(), R)];
 
+write(R) when is_record(R, notify_private) ->
+    [?CMD_NOTIFY_PRIVATE|pickle(notify_private(), R)];
+
 write(R) when is_record(R, notify_shared) ->
     [?CMD_NOTIFY_SHARED|pickle(notify_shared(), R)];
 
@@ -905,6 +915,9 @@ read(<<?CMD_BET_REQ, Bin/binary>>) ->
 
 read(<<?CMD_NOTIFY_DRAW, Bin/binary>>) ->
     unpickle(notify_draw(), Bin);
+
+read(<<?CMD_NOTIFY_PRIVATE, Bin/binary>>) ->
+    unpickle(notify_private(), Bin);
 
 read(<<?CMD_NOTIFY_SHARED, Bin/binary>>) ->
     unpickle(notify_shared(), Bin);
