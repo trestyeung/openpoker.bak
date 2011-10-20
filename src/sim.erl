@@ -13,15 +13,18 @@ init() ->
   schema:install(),
   player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
   player:create("1020", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
+  player:create("1030", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
 
   player:update_photo(1, <<"def_face_1">>),
   player:update_photo(2, <<"def_face_2">>),
+  player:update_photo(3, <<"def_face_3">>),
 
   server:start().
 
 login() ->
   login:login(<<"1010">>, <<"pass">>, self()),
   login:login(<<"1020">>, <<"pass">>, self()),
+  login:login(<<"1030">>, <<"pass">>, self()),
   ok.
 
 socket() -> 
@@ -71,9 +74,13 @@ join() ->
 join(P, N) ->
   gen_server:cast(p(P), #join{game=g(1), seat=N, amount=100.0}).
 
-rec() ->
+call(P) ->
+  gen_server:cast(p(P), #raise{game=g(1), raise=0.0}).
+
+rec(P) ->
   receive 
-    {packet, M} -> M
+    {packet, M, {self, P}} -> 
+      M
   end.
 
 flush() ->

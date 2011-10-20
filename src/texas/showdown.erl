@@ -6,15 +6,19 @@
 -include_lib("eunit/include/eunit.hrl").
 
 start(Game, Ctx, []) ->
-    g:show_cards(Game, Ctx#texas.b),
-    Ranks = g:rank_hands(Game),
-    notify_hands(Game, Ranks),
-    Pots = g:pots(Game),
-    Winners = gb_trees:to_list(winners(Ranks, Pots)),
-    Game1 = notify_winners(Game, Winners),
-    g:broadcast(Game1, #notify_end_game{ game = Game1#game.gid }),
-    Ctx1 = Ctx#texas{ winners = Winners },
-    {stop, Game1, Ctx1}.
+  g:show_cards(Game, Ctx#texas.b),
+
+  Ranks = g:rank_hands(Game),
+  notify_hands(Game, Ranks),
+
+  Pots = g:pots(Game),
+  Winners = gb_trees:to_list(winners(Ranks, Pots)),
+  Game1 = notify_winners(Game, Winners),
+
+  g:broadcast(Game1, #notify_end_game{ game = Game1#game.gid }),
+  Ctx1 = Ctx#texas{ winners = Winners },
+
+  {stop, Game1, Ctx1}.
 
 %%%
 %%% Utility

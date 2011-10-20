@@ -368,6 +368,17 @@
 					proc % internal
 				 }).
 
+-define(CMD_NOTIFY_SEAT_DETAIL, 83).
+
+-record(notify_seat_detail, {
+    game, 
+    seat,
+    state,
+    player,
+    inplay,
+    nick
+  }).
+
 -define(CMD_NOTIFY_GAME_DETAIL, 81).
 
 -record(notify_game_detail, {

@@ -136,7 +136,14 @@ notify_player_state(Player, Game) ->
             undefined
         end,
 
-        gen_server:cast(Player, S#seat_state{ nick = Nick })
+        gen_server:cast(Player, #notify_seat_detail {
+          game = S#seat_state.game,
+          seat = S#seat_state.seat,
+          state = S#seat_state.state,
+          player = S#seat_state.player,
+          inplay = S#seat_state.inplay,
+          nick = Nick
+        })
     end,
     lists:foreach(F, L).
 
@@ -479,27 +486,27 @@ get_seat(Game, Player)
     end.
 
 request_bet(Game, SeatNum, Call, Min, Max) ->
-    Seat = element(SeatNum, Game#game.seats),
-    if 
-        %% auto-play enabled
-        Seat#seat.cmd_que /= [] ->
-            Seat1 = process_autoplay(Game, Seat),
-            Game#game {
-              seats = setelement(SeatNum,
-                                 Game#game.seats,
-                                 Seat1)
-             };
-        %% regular bet request
-        true ->
-            BetReq = #bet_req{
-              game = Game#game.gid,
-              call = Call,
-              min = Min,
-              max = Max
-             },
-            gen_server:cast(Seat#seat.player, BetReq),
-            Game
-    end.
+  Seat = element(SeatNum, Game#game.seats),
+  if 
+    %% auto-play enabled
+    Seat#seat.cmd_que /= [] ->
+      Seat1 = process_autoplay(Game, Seat),
+      Game#game {
+        seats = setelement(SeatNum,
+          Game#game.seats,
+          Seat1)
+      };
+    %% regular bet request
+    true ->
+      BetReq = #bet_req{
+        game = Game#game.gid,
+        call = Call,
+        min = Min,
+        max = Max
+      },
+      gen_server:cast(Seat#seat.player, BetReq),
+      Game
+  end.
 
 %%% Use stored commands instead of asking player
 

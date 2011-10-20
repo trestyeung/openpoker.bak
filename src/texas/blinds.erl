@@ -67,8 +67,8 @@ small_blind(Game, Ctx, R) when
   is_record(R, come_back) ->
     {skip, Game, Ctx};
 
-small_blind(Game, Ctx, R) ->
-  ?LOG([{small_blind, unknown_protocol, R}]),
+small_blind(Game, Ctx, Event) ->
+  ?LOG([{small_blind, unknown_event, Event}]),
   {continue, Game, Ctx}.
 
 %%% big blind
@@ -93,8 +93,8 @@ big_blind(Game, Ctx, R = #leave{}) ->
 big_blind(Game, Ctx, R = #watch{}) ->
   watch(Game, Ctx, R);
 
-big_blind(Game, Ctx, R) ->
-  ?LOG([{big_blind, unknown_protocol, R}]),
+big_blind(Game, Ctx, Event) ->
+  ?LOG([{big_blind, unknown_event, Event}]),
   {continue, Game, Ctx}.
 
 %%

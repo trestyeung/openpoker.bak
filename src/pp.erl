@@ -608,6 +608,16 @@ notify_tourney_leave() ->
              player()
             }).
 
+notify_seat_detail() ->
+    record(notify_seat_detail, {
+             game(), 
+             seat(),
+             state(),
+             player(),
+             amount(),
+             nick()
+           }).
+
 notify_game_detail() ->
   record(notify_game_detail, {
       game(),
@@ -819,6 +829,9 @@ write(R) when is_record(R, tourney_query) ->
 write(R) when is_record(R, tourney_info) ->
     [?CMD_TOURNEY_INFO|pickle(tourney_info(), R)];
 
+write(R) when is_record(R, notify_seat_detail) ->
+  [?CMD_NOTIFY_SEAT_DETAIL | pickle(notify_seat_detail(), R)];
+
 write(R) when is_record(R, notify_game_detail) ->
   [?CMD_NOTIFY_GAME_DETAIL | pickle(notify_game_detail(), R)];
 
@@ -997,6 +1010,9 @@ read(<<?CMD_TOURNEY_INFO, Bin/binary>>) ->
 
 read(<<?CMD_NOTIFY_GAME_DETAIL, Bin/binary>>) ->
   unpickle(notify_game_detail(), Bin);
+
+read(<<?CMD_NOTIFY_GAME_DETAIL, Bin/binary>>) ->
+  unpickle(notify_seat_detail(), Bin);
 
 read(<<?CMD_PING, Bin/binary>>) ->
     unpickle(ping(), Bin);

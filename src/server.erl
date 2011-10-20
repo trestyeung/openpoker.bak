@@ -247,9 +247,10 @@ parse_packet(Socket, {socket, Packet}, Client) ->
   Data = (catch pp:read(Packet)),
   case Data of
     #ping{} -> opps;
-		#seat_query{} -> opps;
-    _ -> ?LOG([{parse_packet, {self, self()}, {socket, Socket}, {client, Client}, {bin, Packet}, {data, Data}}])
+    #seat_query{} -> opps;
+    _ -> ?LOG([{receive_packet, {packet, Packet, Data}}])
   end,
+
   Client1 = case Data of 
     {'EXIT', Error} ->
       Client;
