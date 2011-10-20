@@ -339,6 +339,7 @@ notify_join() ->
              player(),
              seat(),
              amount(),
+             nick(),
              internal()
             }).
 

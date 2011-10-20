@@ -272,7 +272,7 @@ handle_cast({stop, Reason}, Data) ->
   {stop, Reason, Data};
 
 handle_cast(Event, Data) ->
-  ?LOG([{player_unkonw_cast, {event, Event}}]),
+  ?LOG([{player_unknown_cast, {event, Event}}]),
   {noreply, Data}.
 
 handle_call('ID', _From, Data) ->

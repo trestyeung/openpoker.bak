@@ -356,6 +356,7 @@
 					player,
 					seat,
 					amount,
+          nick,
 					proc % internal
 				 }).
 

@@ -125,6 +125,21 @@ broadcast_player_state(Game) ->
     end,
     lists:foreach(F, L).
 
+notify_player_state(Player, Game) ->
+    L = seat_query(Game),
+    F = fun(S) -> 
+        Pid = pp:id_to_player(S#seat_state.player),
+        Nick = case is_pid(Pid) of
+          true ->
+            gen_server:call(Pid, 'NICK QUERY');
+          false ->
+            undefined
+        end,
+
+        gen_server:cast(Player, S#seat_state{ nick = Nick })
+    end,
+    lists:foreach(F, L).
+
 make_players(Game, Seats) ->
     make_players(Game, Seats, []).
 
@@ -250,8 +265,8 @@ watch(Game, Ctx, R) ->
       Detail
   end,
 
-  ?LOG([{watch_game, {detail, Detail1}}]),
   gen_server:cast(R#watch.player, Detail1),
+  notify_player_state(R#watch.player, Game),
   Game#game{ observers = [R#watch.player|Obs] }.
 
 join(Game, R) ->
@@ -280,6 +295,7 @@ join(Game, R) ->
                       player = PID,
                       seat = R#join.seat,
                       amount = R#join.amount,
+                      nick = gen_server:call(R#join.player, 'NICK QUERY'),
                       proc = self()
                      },
                     %% take seat and broadcast the fact
@@ -444,7 +460,8 @@ set_state(Game, SeatNum, State)
       seat = SeatNum,
       state = State,
       player = Seat#seat.pid,
-      inplay = Seat#seat.inplay
+      inplay = Seat#seat.inplay,
+      nick = gen_server:call(Seat#seat.player, 'NICK QUERY')
      },
     broadcast(Game1, Event).
 

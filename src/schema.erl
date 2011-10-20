@@ -147,9 +147,9 @@ populate() ->
           %#limit{ type = ?LT_NO_LIMIT, low = 10, high = 20 },
           %?START_DELAY, ?PLAYER_TIMEOUT, 
           %8),
-  g:setup(?GT_TEXAS_HOLDEM, 5, 
+  g:setup(?GT_TEXAS_HOLDEM, 9,
           #limit{ type = ?LT_NO_LIMIT, low = 10, high = 20 },
-          1000, ?PLAYER_TIMEOUT * 10, 
+          1000, ?PLAYER_TIMEOUT * 100, 
           1).
 
 reset_counters()->
