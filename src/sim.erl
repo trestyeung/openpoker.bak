@@ -11,38 +11,17 @@
 
 init() ->
   schema:install(),
-  player:create("1001", "pass", "6LWM56We", "5YyX5Lqs", 1000), %% Tommy 
-  player:create("1002", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
-  player:create("1003", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1004", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1005", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1006", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1007", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1008", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1009", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
   player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1011", "pass", "6LWM56We", "5YyX5Lqs", 1000), %% Tommy 
-  player:create("1012", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
-  player:create("1013", "pass", "6LWM56We", "5YyX5Lqs", 1000), %% Tommy 
-  player:create("1014", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
-  player:create("1015", "pass", "6LWM56We", "5YyX5Lqs", 1000), %% Tommy 
-  player:create("1016", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
-  player:create("1017", "pass", "6LWM56We", "5YyX5Lqs", 1000), %% Tommy 
-  player:create("1018", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
-  player:create("1019", "pass", "6LWM56We", "5YyX5Lqs", 1000), %% Tommy 
   player:create("1020", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
+
   player:update_photo(1, <<"def_face_1">>),
   player:update_photo(2, <<"def_face_2">>),
-  player:update_photo(3, <<"def_face_3">>),
-  player:update_photo(10, <<"def_face_1">>),
-  player:update_photo(20, <<"def_face_3">>),
 
   server:start().
 
 login() ->
-  login:login(<<"1000">>, <<"pass">>, self()),
-  login:login(<<"1001">>, <<"pass">>, self()),
-  login:login(<<"1002">>, <<"pass">>, self()),
+  login:login(<<"1010">>, <<"pass">>, self()),
+  login:login(<<"1020">>, <<"pass">>, self()),
   ok.
 
 socket() -> 
@@ -85,8 +64,12 @@ dg(GID) when is_pid(GID) ->
 watch() ->
   gen_server:cast(p(1),#watch{game=g(1)}).
 
-join(P,G) ->
-  gen_server:cast(P, #join{game=G, seat=1, amount=100.0}).
+join() -> 
+  join(1, 1),
+  join(2, 2).
+
+join(P, N) ->
+  gen_server:cast(p(P), #join{game=g(1), seat=N, amount=100.0}).
 
 rec() ->
   receive 

@@ -84,11 +84,11 @@ get_seats(Seats, Size, At, Counter, Mask, Acc) ->
     Seat = element(SeatNum, Seats),
     IsMember = (Seat#seat.state band Mask) > 0,
     List = if
-               IsMember ->
-                   [SeatNum|Acc];
-               true ->
-                   Acc
-           end,
+      IsMember ->
+        [SeatNum|Acc];
+      true ->
+        Acc
+    end,
     get_seats(Seats, Size, At + 1, Counter - 1, Mask, List).
 
 is_empty(Game) ->
@@ -197,18 +197,18 @@ reset_player_state(Game, _From, _To, 0) ->
     Game;
 
 reset_player_state(Game, From, To, Count) ->
-    Seat = element(Count, Game#game.seats),
-    Game1 = if
-                (Seat#seat.state band From) > 0 ->
-                    Game#game {
-                      seats = setelement(Count,
-                                         Game#game.seats,
-                                         Seat#seat{ state = To })
-                     };
-                true ->
-                    Game
-            end,
-    reset_player_state(Game1, From, To, Count - 1).
+  Seat = element(Count, Game#game.seats),
+  Game1 = if
+    (Seat#seat.state band From) > 0 ->
+      Game#game {
+        seats = setelement(Count,
+          Game#game.seats,
+          Seat#seat{ state = To })
+      };
+    true ->
+      Game
+  end,
+  reset_player_state(Game1, From, To, Count - 1).
 
 reset_bets(Game) ->
     reset_bets(Game, size(Game#game.seats)).
@@ -244,8 +244,6 @@ reset_hands(Seats, Count) ->
 watch(Game, Ctx, R) ->
   Players = get_seats(Game, ?PS_ANY),
   Obs = Game#game.observers,
-
-  ?LOG([{watch_game, {game, Game}, {context, Ctx}, {msg, R}}]),
 
   Detail = #notify_game_detail{
     game = Game#game.gid, 
