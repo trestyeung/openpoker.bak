@@ -70,7 +70,9 @@ dg(GID) when is_pid(GID) ->
 watch() ->
   gen_server:cast(p(1),#watch{game=g(1)}).
 
-join() -> 
+join_two() -> 
+  login(),
+  timer:sleep(1000),
   join(1, 1),
   join(2, 2).
 

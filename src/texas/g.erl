@@ -815,18 +815,22 @@ core_texas_mods() ->
      {blinds, []},
      %% deal 2 cards to each player
      {deal_cards, [2, private]}, 
+     {rank, []}, 
      %% start after BB, 3 raises
      {betting, [?MAX_RAISES, ?GS_PREFLOP, true]}, 
      %% show 3 shared cards
      {deal_cards, [3, shared]}, 
+     {rank, []}, 
      %% flop
      {betting, [?MAX_RAISES, ?GS_FLOP]}, 
      %% show 1 more shared card
      {deal_cards, [1, shared]}, 
+     {rank, []}, 
      %% turn
      {betting, [?MAX_RAISES, ?GS_TURN]}, 
      %% show 1 more shared card
      {deal_cards, [1, shared]}, 
+     {rank, []}, 
      %% river
      {betting, [?MAX_RAISES, ?GS_RIVER]}, 
      %% showdown

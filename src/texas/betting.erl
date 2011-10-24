@@ -7,6 +7,7 @@ start(Game, Ctx, [MaxRaises, Stage]) ->
     start(Game, Ctx, [MaxRaises, Stage, false]);
 
 start(Game, Ctx, [MaxRaises, Stage, HaveBlinds]) ->
+  ?LOG([{game_stage, Stage}]),
   Ctx1 = Ctx#texas{
     have_blinds = HaveBlinds,
     max_raises = MaxRaises,
