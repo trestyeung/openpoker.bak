@@ -772,22 +772,95 @@ high_card_win1_test() ->
     ?assertEqual(true, short(H1) == short(H2)).
 
 full_house_win1_test() ->
-    H1 = rank_test_hand("2H 2C 5H 5S 5C 7C 4D"),
-    H2 = rank_test_hand("2H 2C 5H 5S 5D 4D 2D"),
-    ?assertEqual(?HC_FULL_HOUSE, H1#hand.rank),
-    ?assertEqual(?HC_FULL_HOUSE, H2#hand.rank),
-    ?assertEqual(true, short(H1) == short(H2)).
+  H1 = rank_test_hand("2H 2C 5H 5S 5C 7C 4D"),
+  H2 = rank_test_hand("2H 2C 5H 5S 5D 4D 2D"),
+  ?assertEqual(?HC_FULL_HOUSE, H1#hand.rank),
+  ?assertEqual(?HC_FULL_HOUSE, H2#hand.rank),
+  ?assertEqual(true, short(H1) == short(H2)).
 
 
-gr(Cards, Rank) ->
-  F = fun(Card) ->
-      R = rank_test_player_hand(Card),
-      ?assertEqual(Rank, R#player_hand.rank)
+gr(L) ->
+  F = fun({Cards, Rank, High1, High2, Suit}) ->
+      R = rank_test_player_hand(Cards),
+      ?assertEqual(Rank, R#player_hand.rank),
+      ?assertEqual(High1, R#player_hand.high1),
+      ?assertEqual(High2, R#player_hand.high2),
+      ?assertEqual(Suit, R#player_hand.suit)
   end,
-  lists:map(F, Cards).
+  lists:map(F, L).
 
-rank_player_pair1_test() ->
-  gr(["2H 2C", "5H 5C", "4D 3S 3H"], ?HC_PAIR).
+rank_player_pair_test() ->
+  L = [
+    {"2H 2C", ?CF_TWO}, 
+    {"5H 5C", ?CF_FIVE}, 
+    {"4D 3S 3H", ?CF_THREE}, 
+    {"AD 4S 9H 8D 9S 2D TS", ?CF_NINE}
+  ],
+  gr([{Cards, ?HC_PAIR, High1, ?CF_NONE, ?CS_NONE} || {Cards, High1} <- L]).
+
+rank_player_two_pair_test() ->
+  L = [
+    {"2H 2C AD AS", ?CF_ACE, ?CF_TWO},
+    {"4H 4C 8D AS AD", ?CF_ACE, ?CF_FOUR},
+    {"4H 4C 8D AS AD 8S", ?CF_ACE, ?CF_EIGHT},
+    {"KH KC 8D AS AD 8S 7D", ?CF_ACE, ?CF_KING}
+  ],
+  gr([{Cards, ?HC_TWO_PAIR, High1, High2, ?CS_NONE} || {Cards, High1, High2} <- L]).
+
+rank_player_three_kind_test() ->
+  L = [
+    {"2H 2C 2D AS", ?CF_TWO},
+    {"4H 9C AH AS AD", ?CF_ACE},
+    {"4H 8C 8D AS 2D 8S", ?CF_EIGHT},
+    {"KH KC 6D AS KD 8S 7D", ?CF_KING}
+  ],
+  gr([{Cards, ?HC_THREE_KIND, High1, ?CF_NONE, ?CS_NONE} || {Cards, High1} <- L]).
+
+rank_player_four_kind_test() ->
+  L = [
+    {"2H 2C 2D 2S", ?CF_TWO},
+    {"4H AC AH AS AD", ?CF_ACE},
+    {"4H 8C 8D 8H 2D 8S", ?CF_EIGHT},
+    {"KH KC KS AS KD 8S 7D", ?CF_KING}
+  ],
+  gr([{Cards, ?HC_FOUR_KIND, High1, ?CF_NONE, ?CS_NONE} || {Cards, High1} <- L]).
+
+rank_player_full_house_test() ->
+  L = [
+    {"2H 2C 2D 4S 4D", ?CF_TWO, ?CF_FOUR},
+    {"KD AH AC AS 3S 3D", ?CF_ACE, ?CF_THREE},
+    {"TS TD KH KC KD 8S 8C", ?CF_KING, ?CF_TEN}
+  ],
+  gr([{Cards, ?HC_FULL_HOUSE, High1, High2, ?CS_NONE} || {Cards, High1, High2} <- L]).
+
+rank_player_staright_test() ->
+  L = [
+    {"2D 3S 4D 5S 6H", ?CF_SIX},
+    {"2D 3S 4D 5S AH", ?CF_FIVE},
+    {"2D 3S 4D 5S AH 8D 2S", ?CF_FIVE},
+    {"2D 3S 4D 5S 6H 8D 2S", ?CF_SIX},
+    {"7D 3S 4D 5S 6H 2D AD", ?CF_SEVEN},
+    {"AD KS QD JS TH 9S 8H", ?CF_ACE}
+  ],
+  gr([{Cards, ?HC_STRAIGHT, High1, ?CF_NONE, ?CS_NONE} || {Cards, High1} <- L]).
+
+rank_player_flush_test() ->
+  L = [
+    {"2D 8D 4D 9D AD", ?CF_ACE, ?CS_DIAMONDS},
+    {"2D 3D 4D 5D 6S 7D", ?CF_SEVEN, ?CS_DIAMONDS},
+    {"3H 9H TH KH 4H QH 5H", ?CF_KING, ?CS_HEARTS},
+    {"3H 9H TH KS 4H QH 5H", ?CF_QUEEN, ?CS_HEARTS}
+  ],
+  gr([{Cards, ?HC_FLUSH, High1, ?CF_NONE, Suit} || {Cards, High1, Suit} <- L]).
+
+rank_player_staright_flush_test() ->
+  L = [
+    {"2D 3D 4D 5D 6D", ?CF_SIX, ?CS_DIAMONDS},
+    {"2D 3D 4D 5D AD", ?CF_FIVE, ?CS_DIAMONDS},
+    {"KD JD TD QD AD", ?CF_ACE, ?CS_DIAMONDS},
+    {"KD JD TD QD AS 9D 8D", ?CF_KING, ?CS_DIAMONDS}
+  ],
+  gr([{Cards, ?HC_STRAIGHT_FLUSH, High1, ?CF_NONE, Suit} || {Cards, High1, Suit} <- L]).
 
 print_bin(X) ->
     io:format("AKQJT98765432A~n"),
