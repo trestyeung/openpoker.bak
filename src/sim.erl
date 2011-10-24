@@ -10,6 +10,9 @@
 -include("texas/ctx.hrl").
 
 init() ->
+  %Host = "192.168.1.116",
+  Host = "127.0.0.1",
+  Port = 8002,
   schema:install(),
   player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
   player:create("1020", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
@@ -19,7 +22,7 @@ init() ->
   player:update_photo(2, <<"def_face_2">>),
   player:update_photo(3, <<"def_face_3">>),
 
-  server:start().
+  server:start(Host, Port).
 
 login() ->
   login:login(<<"1010">>, <<"pass">>, self()),

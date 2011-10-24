@@ -183,6 +183,12 @@
 					min,
 					max
 				 }).
+-define(CMD_NOTIFY_ACTOR, 84).
+
+-record(notify_actor, {
+					game, 
+				  seat	
+				 }).
 
 -define(CMD_NOTIFY_DRAW, 21).
 

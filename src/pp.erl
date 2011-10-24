@@ -452,6 +452,12 @@ bet_req() ->
              raise_max()
             }).
 
+notify_actor() ->
+    record(notify_actor, {
+             game(), 
+             seat()
+           }).
+
 notify_draw() ->
     record(notify_draw, {
              game(), 
@@ -751,6 +757,9 @@ write(R) when is_record(R, bet_req) ->
 write(R) when is_record(R, notify_draw) ->
     [?CMD_NOTIFY_DRAW|pickle(notify_draw(), R)];
 
+write(R) when is_record(R, notify_actor) ->
+    [?CMD_NOTIFY_ACTOR|pickle(notify_actor(), R)];
+
 write(R) when is_record(R, notify_private) ->
     [?CMD_NOTIFY_PRIVATE|pickle(notify_private(), R)];
 
@@ -929,6 +938,9 @@ read(<<?CMD_BET_REQ, Bin/binary>>) ->
 
 read(<<?CMD_NOTIFY_DRAW, Bin/binary>>) ->
     unpickle(notify_draw(), Bin);
+
+read(<<?CMD_NOTIFY_ACTOR, Bin/binary>>) ->
+    unpickle(notify_actor(), Bin);
 
 read(<<?CMD_NOTIFY_PRIVATE, Bin/binary>>) ->
     unpickle(notify_private(), Bin);
