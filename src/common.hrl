@@ -155,10 +155,11 @@
 
 %%% Suit
 
--define(CS_CLUBS, 1).
--define(CS_DIAMONDS, 2).
--define(CS_HEARTS, 3).
 -define(CS_SPADES, 4).
+-define(CS_HEARTS, 3).
+-define(CS_DIAMONDS, 2).
+-define(CS_CLUBS, 1).
+-define(CS_NONE, 0).
 
 %%% Hand combination
 
@@ -179,13 +180,15 @@
 					rank = none,
 					high1 = none,
 					high2 = none,
+          suit = ?CS_NONE,
 					score = 0
 				 }).
 
 -record(player_hand, {
 					rank = ?HC_HIGH_CARD,
 					high1 = ?CF_NONE,
-					high2 = ?CF_NONE
+					high2 = ?CF_NONE,
+          suit = ?CS_NONE
 				 }).
 
 -define(error1(Expr, Expected, Actual),

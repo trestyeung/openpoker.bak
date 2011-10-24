@@ -107,4 +107,4 @@ flush(Debug) ->
 
 rank(R) ->
   Cards = hand:make_cards(R),
-  hand:rank(#hand{cards = Cards}).
+  hand:player_hand(hand:rank(#hand{cards = Cards})).

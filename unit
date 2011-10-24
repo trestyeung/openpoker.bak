@@ -1,0 +1,9 @@
+#!/bin/bash
+
+mkdir -p ebin
+erl -make
+cd ebin
+erl -sname test -run hand test
+cd ..
+
+

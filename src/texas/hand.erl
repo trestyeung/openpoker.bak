@@ -6,10 +6,8 @@
 
 -export([new/2, new/3, add/2, rank/1]).
 
--export([make_card/1, make_card/2, print_bin/1, 
+-export([make_card/1, make_card/2, make_cards/1, print_bin/1, 
          print_rep/1, to_string/1, player_hand/1, card_to_string/1]).
-
--compile([export_all]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -50,7 +48,6 @@ rank(Hand, [Rank|T], Rep) ->
     none ->
       rank(Hand, T, Rep);
     Hand1 ->
-      ?LOG([{hand, Hand1}]),
       Hand1
   end;
 
@@ -70,7 +67,7 @@ is_straight_flush(Hand, Rep) ->
           none ->
             none;
           Hand2 ->
-            Hand2#hand{ rank = ?HC_STRAIGHT_FLUSH, high2 = Hand1#hand.high2 }
+            Hand2#hand{ rank = ?HC_STRAIGHT_FLUSH, suit = Hand1#hand.suit }
       end
     end.
 
@@ -81,13 +78,12 @@ is_flush(Hand, Rep) ->
 is_flush(Hand, Mask, [H|T], Suit) ->
   Score = Mask band H,
   Count = bits:bits1(Score),
-  ?LOG([{mask, Mask, h, H, score, Score, count, Count}]),
   if 
     Count < 5 ->
       is_flush(Hand, Mask, T, Suit + 1);
     true ->
       High1 = bits:clear_extra_bits(Score, 5),
-      Hand#hand{ rank = ?HC_FLUSH, high1 = High1, high2 = Suit }
+      Hand#hand{ rank = ?HC_FLUSH, high1 = High1, suit = Suit }
   end;
 
 is_flush(_, _, [], _) ->
@@ -234,7 +230,6 @@ make_rep([H|T], Rep)
     Face = 1 bsl (H bsr 8),
     Suit = H band 16#ff,
     Old = element(Suit, Rep),
-    ?LOG([{make_rep, card, H, old_face, (H bsr 8), face, Face, suit, Suit, old, Old, rep, Rep}]),
     make_rep(T, setelement(Suit, Rep, Old bor Face));
 
 make_rep([], Rep) ->
@@ -425,6 +420,12 @@ player_hand(#hand{ rank = Rank, high1 = High3, high2 = High2 })
     H2 = face_from_mask(High2),
     #player_hand{ rank = Rank, high1 = H1, high2 = H2 };
 
+player_hand(#hand{ rank = Rank, high1 = High3, suit = Suit }) 
+  when Rank == ?HC_FLUSH;
+       Rank == ?HC_STRAIGHT_FLUSH ->
+    H1 = face_from_mask(High3),
+    #player_hand{ rank = Rank, high1 = H1, suit = Suit };
+
 player_hand(#hand{ rank = Rank, high1 = High }) ->
     #player_hand{ rank = Rank, high1 = face_from_mask(High) }.
 
@@ -443,6 +444,9 @@ make_rep_test() ->
 rank_test_hand(Cards) ->
     Hand = new(0, 0, make_cards(Cards)),
     rank(Hand).
+
+rank_test_player_hand(Cards) ->
+  player_hand(rank_test_hand(Cards)).
 
 short(Hand) ->
     {Hand#hand.rank, 
@@ -774,6 +778,17 @@ full_house_win1_test() ->
     ?assertEqual(?HC_FULL_HOUSE, H2#hand.rank),
     ?assertEqual(true, short(H1) == short(H2)).
 
+
+gr(Cards, Rank) ->
+  F = fun(Card) ->
+      R = rank_test_player_hand(Card),
+      ?assertEqual(Rank, R#player_hand.rank)
+  end,
+  lists:map(F, Cards).
+
+rank_player_pair1_test() ->
+  gr(["2H 2C", "5H 5C", "4D 3S 3H"], ?HC_PAIR).
+
 print_bin(X) ->
     io:format("AKQJT98765432A~n"),
     io:format("~14.2.0B~n", [X]).
@@ -787,4 +802,6 @@ print_rep({C, D, H, S}) ->
     io:format("D: ~14.2.0B~n", [D]),
     io:format("H: ~14.2.0B~n", [H]),
     io:format("S: ~14.2.0B~n", [S]).
+
+
     
