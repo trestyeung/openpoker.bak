@@ -698,7 +698,10 @@ rank_hands(Game, Seats) ->
                  lists:map(F2, Acc)
          end,
     Hands1 = lists:foldl(F1, Hands, Cards), %% 将公共牌派发到每一个手牌当中
-    F2 = fun(Hand) -> hand:rank(Hand) end, %% 对所有的手牌进行排名并返回
+    ?LOG([{hands, Hands1}]),
+    F2 = fun(Hand) -> 
+        hand:rank(Hand) 
+    end, %% 对所有的手牌进行排名并返回
     lists:map(F2, Hands1).
 
 pots(Game) ->

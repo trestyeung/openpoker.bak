@@ -104,3 +104,7 @@ flush(Debug) ->
   after 0 ->
       ok
   end.
+
+rank(R) ->
+  Cards = hand:make_cards(R),
+  hand:rank(#hand{cards = Cards}).

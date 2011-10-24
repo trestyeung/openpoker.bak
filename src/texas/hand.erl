@@ -9,6 +9,8 @@
 -export([make_card/1, make_card/2, print_bin/1, 
          print_rep/1, to_string/1, player_hand/1, card_to_string/1]).
 
+-compile([export_all]).
+
 -include_lib("eunit/include/eunit.hrl").
 
 -include("texas.hrl").
@@ -27,21 +29,28 @@ add(Hand, Card) ->
     Hand#hand{ cards = [Card|Hand#hand.cards] }.
 
 rank(Hand) ->
-    rank(Hand, [fun is_straight_flush/2,
-                fun is_four_kind/2,
-                fun is_full_house/2,
-                fun is_flush/2,
-                fun is_straight/2,
-                fun is_three_kind/2,
-                fun is_two_pair/2,
-                fun is_pair/2
-               ], make_rep(Hand)).
+  %% 按照花色生成对牌型的位组合
+  %% 0b0001 向左位移相应Face的位数，通过对位移后的结果进行与运算
+  %% 获取当前花色的手牌组合
+
+  Rep = make_rep(Hand),
+  L = [fun is_straight_flush/2,
+    fun is_four_kind/2,
+    fun is_full_house/2,
+    fun is_flush/2,
+    fun is_straight/2,
+    fun is_three_kind/2,
+    fun is_two_pair/2,
+    fun is_pair/2],
+
+  rank(Hand, L, Rep).
 
 rank(Hand, [Rank|T], Rep) ->
   case Rank(Hand, Rep) of
     none ->
       rank(Hand, T, Rep);
     Hand1 ->
+      ?LOG([{hand, Hand1}]),
       Hand1
   end;
 
@@ -52,35 +61,36 @@ rank(Hand, [], Rep) ->
 
 is_straight_flush(Hand, Rep) ->
     Mask = make_mask(Rep),
-    case is_flush(Hand, Mask, Rep) of
-        none ->
+    case is_flush(Hand, Mask, Rep, ?CS_CLUBS) of
+      none ->
+        none;
+      Hand1 ->
+        High = Hand1#hand.high1,
+        case is_straight(Hand, [High, High, High, High]) of
+          none ->
             none;
-        Hand1 ->
-            High = Hand1#hand.high1,
-      case is_straight(Hand, [High, High, High, High]) of
-                none ->
-                    none;
-                Hand2 ->
-                    Hand2#hand{ rank = ?HC_STRAIGHT_FLUSH }
+          Hand2 ->
+            Hand2#hand{ rank = ?HC_STRAIGHT_FLUSH, high2 = Hand1#hand.high2 }
       end
     end.
 
 is_flush(Hand, Rep) ->
     Mask = make_mask(Rep),
-    is_flush(Hand, Mask, Rep).
+    is_flush(Hand, Mask, Rep, ?CS_CLUBS).
 
-is_flush(Hand, Mask, [H|T]) ->
-    Score = Mask band H,
-    Count = bits:bits1(Score),
-    if 
-  Count < 5 ->
-      is_flush(Hand, Mask, T);
-  true ->
-            High1 = bits:clear_extra_bits(Score, 5),
-            Hand#hand{ rank = ?HC_FLUSH, high1 = High1 }
-    end;
+is_flush(Hand, Mask, [H|T], Suit) ->
+  Score = Mask band H,
+  Count = bits:bits1(Score),
+  ?LOG([{mask, Mask, h, H, score, Score, count, Count}]),
+  if 
+    Count < 5 ->
+      is_flush(Hand, Mask, T, Suit + 1);
+    true ->
+      High1 = bits:clear_extra_bits(Score, 5),
+      Hand#hand{ rank = ?HC_FLUSH, high1 = High1, high2 = Suit }
+  end;
 
-is_flush(_, _, []) ->
+is_flush(_, _, [], _) ->
     none.
 
 is_straight(Hand, Rep) ->
@@ -213,7 +223,7 @@ is_pair(_, [], _) ->
     none.
 
 make_rep(Hand = #hand{}) ->
-    make_rep(Hand#hand.cards);
+  make_rep(Hand#hand.cards);
 
 make_rep(Cards) 
   when is_list(Cards) ->
@@ -224,6 +234,7 @@ make_rep([H|T], Rep)
     Face = 1 bsl (H bsr 8),
     Suit = H band 16#ff,
     Old = element(Suit, Rep),
+    ?LOG([{make_rep, card, H, old_face, (H bsr 8), face, Face, suit, Suit, old, Old, rep, Rep}]),
     make_rep(T, setelement(Suit, Rep, Old bor Face));
 
 make_rep([], Rep) ->
