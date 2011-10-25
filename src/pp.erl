@@ -160,6 +160,9 @@ cards() ->
 card() -> 
     short().
 
+suit() ->
+  byte().
+
 face() ->
     byte().
 
@@ -170,7 +173,8 @@ player_hand() ->
     record(player_hand, {
              rank(),
              face(),
-             face()
+             face(),
+             byte()
             }).
 
 limit_type() ->
