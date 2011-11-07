@@ -13,12 +13,18 @@ start(Game, Ctx, []) ->
 
   Pots = g:pots(Game),
   Winners = gb_trees:to_list(winners(Ranks, Pots)),
+  ?LOG([{winners, Winners}]),
   Game1 = notify_winners(Game, Winners),
 
-  g:broadcast(Game1, #notify_end_game{ game = Game1#game.gid }),
+  %% TODO 将所有金额不足的玩家重新设置状态
+  {_, Big} = (Game1#game.limit):blinds(Game1#game.low, Game1#game.high),
+  Game2 = check_inplay(g:get_seats(Game, ?PS_ANY), Big, Game1),
+
+  %% 游戏结束
+  g:broadcast(Game2, #notify_end_game{ game = Game2#game.gid }),
   Ctx1 = Ctx#texas{ winners = Winners },
 
-  {stop, Game1, Ctx1}.
+  {stop, Game2, Ctx1}.
 
 %%%
 %%% Utility
@@ -97,3 +103,17 @@ update_counter(Key, Amount, Tree) ->
             gb_trees:insert(Key, Amount, Tree)
     end.
 
+check_inplay([], _Big, Game) ->
+  Game;
+
+check_inplay([SeatNum|T], Big, Game) -> 
+  Seat = element(SeatNum, Game#game.seats),
+  Inplay = Seat#seat.inplay,
+  Game1 = if
+    Inplay =< Big ->
+      ?LOG([{player_out, SeatNum, Big, Inplay}]),
+      g:set_state(Game, SeatNum, ?PS_OUT);
+    true ->
+      Game
+  end,
+  check_inplay(T, Big, Game1).
