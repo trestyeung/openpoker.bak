@@ -104,7 +104,8 @@
 				?PS_MAKEUP_BB bor
 				?PS_ALL_IN bor
 				?PS_BET bor 
-				?PS_AUTOPLAY).
+				?PS_AUTOPLAY bor
+        ?PS_OUT).
 
 -define(PS_ACTIVE, 
 				?PS_PLAY bor 

@@ -256,7 +256,7 @@ seat() ->
     byte().
 
 state() ->
-    byte().
+    int().
 
 %%% Commands 
 
