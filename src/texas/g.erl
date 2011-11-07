@@ -15,7 +15,8 @@
          add_bet/3, new_stage/1, reset_player_state/3,
          pot_size/1, draw/3, draw_shared/2, 
          inplay_plus/3, show_cards/2, rank_hands/1, 
-         pots/1, make/1, make/3, watch/3
+         pots/1, make/1, make/3, watch/3,
+         notify_state/2
         ]).
 
 -include("texas.hrl").
@@ -469,6 +470,28 @@ set_state(Game, SeatNum, State)
       nick = gen_server:call(Seat#seat.player, 'NICK QUERY')
      },
     broadcast(Game1, Event).
+
+notify_state(Game, Player)
+  when is_pid(Player) ->
+    case gb_trees:lookup(Player, Game#game.xref) of
+        {value, SeatNum} ->
+            notify_state(Game, SeatNum);
+        _ ->
+            Game
+    end;
+
+notify_state(Game, SeatNum)
+  when is_integer(SeatNum) ->
+    Seat = element(SeatNum, Game#game.seats),
+    Event = #seat_state{
+      game = Game#game.gid,
+      seat = SeatNum,
+      state = Seat#seat.state,
+      player = Seat#seat.pid,
+      inplay = Seat#seat.inplay,
+      nick = gen_server:call(Seat#seat.player, 'NICK QUERY')
+     },
+    broadcast(Game, Event).
 
 get_seat(Game, SeatNum) 
   when is_record(Game, game),

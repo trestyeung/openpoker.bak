@@ -57,6 +57,7 @@ betting(Game, Ctx, #raise{ player = Player })
 betting(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
   Game1 = g:cancel_timer(Game),
   Amt = Ctx#texas.exp_amt,
+  N = Ctx#texas.exp_seat,
   Seat = g:get_seat(Game1, Ctx#texas.exp_seat),
   Inplay = Seat#seat.inplay,
   if 
@@ -73,7 +74,8 @@ betting(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
         call = Amt
       },
       Game4 = g:broadcast(Game3, R1),
-      next_turn(Game4, Ctx, Ctx#texas.exp_seat)
+      Game5 = g:notify_state(Game4, N),
+      next_turn(Game5, Ctx, Ctx#texas.exp_seat)
   end;
 
 %%% Raise
@@ -82,6 +84,7 @@ betting(Game, Ctx, #raise{ player = Player, raise = Amt }) ->
   Call = Ctx#texas.exp_amt,
   Min = Ctx#texas.exp_min,
   Max = Ctx#texas.exp_max,
+  N = Ctx#texas.exp_seat,
   Seat = g:get_seat(Game, Ctx#texas.exp_seat),
   Inplay = Seat#seat.inplay,
   RC = Game1#game.raise_count,
@@ -114,9 +117,10 @@ betting(Game, Ctx, #raise{ player = Player, raise = Amt }) ->
         call = Call
       },
       Game5 = g:broadcast(Game4, R1),
-      Game6 = Game5#game{ raise_count = RC1 },
+      Game6 = g:notify_state(Game5, N),
+      Game7 = Game6#game{ raise_count = RC1 },
       Ctx1 = Ctx#texas{ call = Ctx#texas.call + Amt },
-      next_turn(Game6, Ctx1, Ctx1#texas.exp_seat)
+      next_turn(Game7, Ctx1, Ctx1#texas.exp_seat)
   end;
 
 %% Fold

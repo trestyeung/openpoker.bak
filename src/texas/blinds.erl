@@ -146,9 +146,11 @@ post_sb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
       raise = 0.0
     }),
 
+  Game3 = g:notify_state(Game2, N),
+
   %% 问玩家下大盲注
-  BBPlayers = g:get_seats(Game2, N, ?PS_ACTIVE),
-  ask_for_blind(Game2, Ctx1, hd(BBPlayers), Ctx1#texas.bb_amt, big_blind).
+  BBPlayers = g:get_seats(Game3, N, ?PS_ACTIVE),
+  ask_for_blind(Game3, Ctx1, hd(BBPlayers), Ctx1#texas.bb_amt, big_blind).
 
 post_bb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
   N = Ctx#texas.exp_seat,
@@ -171,11 +173,12 @@ post_bb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
       raise = 0.0
     }
   ),
+  Game3 = g:notify_state(Game2, N),
 
   ?LOG([{stop_blind, {ctx, Ctx1}}]),
 
   %% 结束盲注
-  {stop, Game2, Ctx1}.
+  {stop, Game3, Ctx1}.
 
 watch(Game, Ctx, R) -> 
   Game1 = g:watch(Game, Ctx, R),
