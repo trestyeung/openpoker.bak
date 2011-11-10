@@ -519,6 +519,7 @@ notify_win() ->
     record(notify_win, {
              game(),
              player(),
+             amount(),
              amount()
             }).
 

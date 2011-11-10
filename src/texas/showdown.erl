@@ -49,11 +49,13 @@ notify_winners(Game, []) ->
 notify_winners(Game, [{H, Amount}|T]) ->
     Player = H#hand.player,
     PID = H#hand.pid,
-    Game1 = g:inplay_plus(Game, Player, Amount),
+    Cost = trunc(Amount * 0.05),
+    Game1 = g:inplay_plus(Game, Player, Amount - Cost),
     Event = #notify_win{ 
       game = Game1#game.gid, 
       player = PID, 
-      amount = Amount
+      amount = Amount,
+      cost = Cost
      },
     g:broadcast(Game1, Event),
     notify_winners(Game1, T).

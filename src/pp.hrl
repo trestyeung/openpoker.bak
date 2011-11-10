@@ -236,7 +236,8 @@
 -record(notify_win, {
 					game,
 					player,
-					amount
+					amount,
+				  cost	
 				 }).
 
 -define(CMD_NOTIFY_HAND, 27).
