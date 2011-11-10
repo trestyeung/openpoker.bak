@@ -164,7 +164,7 @@ broadcast(Game, Event) ->
 
 broadcast(Game, Event, Except) ->
     %% notify players
-    Seats = get_seats(Game, ?PS_ANY),
+    Seats = get_seats(Game, ?PS_ANY bor ?PS_OUT),
     Players = make_players(Game, Seats),
     broadcast(Game, Players, Event, Except), 
     broadcast(Game, Game#game.observers, Event, none).
