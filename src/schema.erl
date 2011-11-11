@@ -149,7 +149,7 @@ populate() ->
           %8),
   g:setup(?GT_TEXAS_HOLDEM, 9,
           #limit{ type = ?LT_NO_LIMIT, low = 10, high = 20 },
-          5000, 15000 * 100, 1). 
+          3000, 15000, 1). 
   %g:setup(?GT_TEXAS_HOLDEM, 9,
           %#limit{ type = ?LT_NO_LIMIT, low = 10, high = 20 },
           %5000, ?PLAYER_TIMEOUT * 100, 
