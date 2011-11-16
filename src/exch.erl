@@ -108,18 +108,20 @@ code_change(_OldVsn, Exch, _Extra) ->
 process_call(Event, Exch) ->
     Cbk:call(Event, Exch#exch.data).
 
-process_cast(Event, Exch) ->   
+process_cast(Event, Exch) ->
     {Mod, _} = hd(Exch#exch.stack),
     State = Exch#exch.state,
     Data = Exch#exch.data,
     Ctx = Exch#exch.ctx,
     Result = Mod:State(Data, Ctx, Event),
+    ?LOG([{advance, Mod, Result}]),
     advance(Exch, Event, Result).
 
 init(Exch = #exch{ stack = [{Mod, Params}|_] }, Event) ->
     Ctx = Exch#exch.ctx,
     Exch1 = Exch#exch{ orig_ctx = Ctx, state = none },
     Result = Mod:start(Exch1#exch.data, Ctx, Params),
+    ?LOG([{advance, Mod, Result}]),
     advance(Exch1, Event, Result).
 
 advance(Exch = #exch{}, _, {next, State, Data, Ctx}) ->

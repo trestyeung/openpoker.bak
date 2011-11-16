@@ -10,8 +10,8 @@
 -include("texas/ctx.hrl").
 
 init() ->
-  %Host = "192.168.1.116",
-  Host = "127.0.0.1",
+  Host = "192.168.1.102",
+  %Host = "127.0.0.1",
   Port = 8002,
   schema:install(),
   player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
