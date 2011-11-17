@@ -73,11 +73,11 @@ watch() ->
 join_two() -> 
   login(),
   timer:sleep(1000),
-  join(1, 1),
-  join(2, 2).
+  join(1),
+  join(2).
 
-join(P, N) ->
-  gen_server:cast(p(P), #join{game=g(1), seat=N, amount=100.0}).
+join(P) ->
+  gen_server:cast(p(P), #join{game=g(1), seat=0, amount=100.0}).
 
 call(P) ->
   gen_server:cast(p(P), #raise{game=g(1), raise=0.0}).

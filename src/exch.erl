@@ -114,14 +114,12 @@ process_cast(Event, Exch) ->
     Data = Exch#exch.data,
     Ctx = Exch#exch.ctx,
     Result = Mod:State(Data, Ctx, Event),
-    ?LOG([{advance, Mod, Result}]),
     advance(Exch, Event, Result).
 
 init(Exch = #exch{ stack = [{Mod, Params}|_] }, Event) ->
     Ctx = Exch#exch.ctx,
     Exch1 = Exch#exch{ orig_ctx = Ctx, state = none },
     Result = Mod:start(Exch1#exch.data, Ctx, Params),
-    ?LOG([{advance, Mod, Result}]),
     advance(Exch1, Event, Result).
 
 advance(Exch = #exch{}, _, {next, State, Data, Ctx}) ->

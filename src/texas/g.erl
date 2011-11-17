@@ -275,44 +275,73 @@ watch(Game, Ctx, R) ->
   notify_player_state(R#watch.player, Game),
   Game#game{ observers = [R#watch.player|Obs] }.
 
-join(Game, R) ->
-    Seats = Game#game.seats,
-    XRef = Game#game.xref,
-    Seat = element(R#join.seat, Seats),
-    Player = R#join.player,
-    OurPlayer = gb_trees:is_defined(Player, XRef),
-    GID = Game#game.gid,
-    PID = R#join.pid,
-    if
+get_empty_seat(Game) ->
+  get_empty_seat(Game#game.seats, 1).
+
+get_empty_seat(Seats, SeatNumber) when size(Seats) < SeatNumber -> 0;
+
+get_empty_seat(Seats, SeatNumber) ->
+  Seat = element(SeatNumber, Seats),
+  if
+    Seat#seat.state == ?PS_EMPTY ->
+      SeatNumber;
+    true ->
+      get_empty_seat(Seats, SeatNumber + 1)
+  end.
+
+join(Game, RR) ->
+  EmptySeat = if 
+    RR#join.seat == 0 ->
+      get_empty_seat(Game);
+    true ->
+      RR#join.seat
+  end,
+
+  R = RR#join {seat = EmptySeat},
+
+  case R#join.seat of
+    0 ->
+      ?LOG([{not_empty_seat}]),
+      Game;
+    _ ->
+      Seats = Game#game.seats,
+      XRef = Game#game.xref,
+      Seat = element(R#join.seat, Seats),
+      Player = R#join.player,
+      OurPlayer = gb_trees:is_defined(Player, XRef),
+      GID = Game#game.gid,
+      PID = R#join.pid,
+      if
         %% seat is taken
         Seat#seat.state /= ?PS_EMPTY ->
-            Game;
+          Game;
         %% already sitting at this table
         OurPlayer ->
-            Game;
+          Game;
         true ->
-            %% try to move the buy-in amount 
-            %% from balance to inplay
-            case do_buy_in(GID, PID, R#join.amount) of
-                ok ->
-                    %% tell player
-                    R1 = #notify_join{ 
-                      game = GID, 
-                      player = PID,
-                      seat = R#join.seat,
-                      amount = R#join.amount,
-                      nick = gen_server:call(R#join.player, 'NICK QUERY'),
-                      proc = self()
-                     },
-                    %% take seat and broadcast the fact
-                    Game1 = do_join(Game, R, R#join.state),
-                    broadcast(Game1, R1);
-                _Any ->
-                    %% no money or other error
-                    %% gen_server:cast(Player, {stop, Any}),
-                    Game
-            end
-    end.
+          %% try to move the buy-in amount 
+          %% from balance to inplay
+          case do_buy_in(GID, PID, R#join.amount) of
+            ok ->
+              %% tell player
+              R1 = #notify_join{ 
+                game = GID, 
+                player = PID,
+                seat = R#join.seat,
+                amount = R#join.amount,
+                nick = gen_server:call(R#join.player, 'NICK QUERY'),
+                proc = self()
+              },
+              %% take seat and broadcast the fact
+              Game1 = do_join(Game, R, R#join.state),
+              broadcast(Game1, R1);
+            _Any ->
+              %% no money or other error
+              %% gen_server:cast(Player, {stop, Any}),
+              Game
+          end
+      end
+  end.
 
 do_buy_in(GID, PID, Amt) 
   when is_number(GID),
