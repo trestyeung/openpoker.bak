@@ -799,7 +799,7 @@ find_1(GameType, LimitType) ->
                       Waiting = 0, % not implemented
                       _ = #game_info{
                         game = GID,
-                        table_name = R#tab_game_xref.table_name,
+                        table_name = names:get_table_name(GID),
                         type = R#tab_game_xref.type,
                         limit = R#tab_game_xref.limit,
                         seat_count = R#tab_game_xref.seat_count,
