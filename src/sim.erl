@@ -16,9 +16,9 @@ init() ->
 
   schema:install(),
 
-  player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 1000), %% Jack
-  player:create("1020", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
-  player:create("1030", "pass", "6buRSkFDSw==", "6aaZ5riv", 1000), %% Sam 
+  player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 100000), %% Jack
+  player:create("1020", "pass", "6buRSkFDSw==", "6aaZ5riv", 100000), %% Sam 
+  player:create("1030", "pass", "6buRSkFDSw==", "6aaZ5riv", 100000), %% Sam 
   player:update_photo(1, <<"def_face_1">>),
   player:update_photo(2, <<"def_face_2">>),
   player:update_photo(3, <<"def_face_3">>),
@@ -26,7 +26,10 @@ init() ->
   server:start(Host, Port),
   timer:sleep(2000),
   login(),
-
+  timer:sleep(2000),
+  join(2),
+  timer:sleep(30000),
+  join(3),
   ok.
 
 login() ->
@@ -41,20 +44,26 @@ login() ->
   ok.
 
 join(PID) ->
-  gen_server:cast(p(PID), #join{game=g(1), seat=0, amount=700.0}).
+  gen_server:cast(p(PID), #join{game=g(1), seat=0, amount=99999.0}).
 
-call(PID) ->
-  gen_server:cast(p(PID), #raise{game=g(1), raise=0.0}).
+call(PID, Raise) ->
+  gen_server:cast(p(PID), #raise{game=g(1), raise=Raise}).
 
 player_loop(PID) ->
   receive
     {packet, {notify_cancel_game, _}} ->
       player_loop(PID);
-    {packet,{bet_req, _GID, _Call, _Min, _Max}} ->
-      call(PID),
+    {packet,{bet_req, _GID, Call, Min, _Max}} ->
+      timer:sleep(4000),
+      %io:format("BET_REQ ~p [Call: ~p Min: ~p] ~n", [PID, Call, Min]),
+      if 
+        Call /= 0.0 -> call(PID, 0.0);
+        true -> call(PID, Min)
+      end,
+
       player_loop(PID);
     Msg ->
-      io:format("Flush [~p]: ~p~n", [PID, Msg]),
+      %io:format("Flush [~p]: ~p~n", [PID, Msg]),
       player_loop(PID)
   end.
 

@@ -396,7 +396,9 @@
     button,
     sblind,
     bblind,
-    stage
+    stage,
+    high,
+    low
   }).
 
 

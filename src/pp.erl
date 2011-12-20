@@ -638,7 +638,9 @@ notify_game_detail() ->
       optional(button()),
       optional(sb()),
       optional(bb()),
-      stage()
+      stage(),
+      amount(),
+      amount()
     }).
 
 tourney_query() ->

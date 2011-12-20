@@ -261,7 +261,9 @@ watch(Game, Ctx, R) ->
     button = Ctx#texas.b,
     sblind = Ctx#texas.sb,
     bblind = Ctx#texas.bb,
-    stage = Ctx#texas.stage
+    stage = Ctx#texas.stage,
+    high = Game#game.high,
+    low = Game#game.low
   },
 
   Detail1 = case Detail#notify_game_detail.stage of

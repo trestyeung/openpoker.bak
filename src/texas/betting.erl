@@ -7,7 +7,6 @@ start(Game, Ctx, [MaxRaises, Stage]) ->
     start(Game, Ctx, [MaxRaises, Stage, false]);
 
 start(Game, Ctx, [MaxRaises, Stage, HaveBlinds]) ->
-  ?LOG([{game_stage, Stage}]),
   Ctx1 = Ctx#texas{
     have_blinds = HaveBlinds,
     max_raises = MaxRaises,
@@ -138,8 +137,7 @@ betting(Game, Ctx, R = #fold{}) ->
 betting(Game, Ctx, {timeout, _, _}) ->
   Game1 = g:cancel_timer(Game),
   Player = Ctx#texas.exp_player,
-  Seat = Ctx#texas.exp_seat,
-  ?LOG([{betting_timeout, {player, Player}, {seat, Seat}}]),
+  %Seat = Ctx#texas.exp_seat,
   betting(Game1, Ctx, #fold{ player = Player });
 
 %% Watch
@@ -157,8 +155,7 @@ betting(Game, Ctx, R = #leave{}) ->
   Game1 = g:leave(Game, R#leave{ state = ?PS_CAN_LEAVE }),
   {continue, Game1, Ctx};
 
-betting(Game, Ctx, Event) ->
-  ?LOG([{betting, unknown_event, Event}]),
+betting(Game, Ctx, _Event) ->
   {continue, Game, Ctx}.
 
 next_turn(Game, Ctx, N) ->
@@ -192,8 +189,6 @@ ask_for_bet(Game, Ctx, N) ->
   Call = Ctx#texas.call - Bet,
   Low = Game#game.low,
   High = Game#game.high,
-
-  ?LOG([{ask_for_bet, N, seat_inplay, Inplay, seat_bet, Bet, texas_call, Ctx#texas.call, bet, Bet}]),
 
   {Min, Max} = (Game#game.limit):raise(Low, High, PotSize, Inplay, Stage),
 
