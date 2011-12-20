@@ -1,7 +1,9 @@
 %%% Copyright (C) 2005-2008 Wager Labs, SA
 
--define(LOG(L), error_logger:info_report([{debug, {module, ?MODULE}, {line, ?LINE}, {self, self()}},L])).
--define(ERROR(L), error_logger:error_report([{debug, {module, ?MODULE}, {line, ?LINE}, {self, self()}},L])).
+%-define(LOG(L), error_logger:info_report([{debug, {module, ?MODULE}, {line, ?LINE}, {self, self()}},L])).
+%-define(ERROR(L), error_logger:error_report([{debug, {module, ?MODULE}, {line, ?LINE}, {self, self()}},L])).
+-define(LOG(L), ok).
+-define(ERROR(L), ok).
 
 %%% 
 

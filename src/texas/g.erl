@@ -272,6 +272,10 @@ watch(Game, Ctx, R) ->
   end,
 
   gen_server:cast(R#watch.player, Detail1),
+
+  % Notify Game Shared Card
+  notify_shared(lists:reverse(Game#game.board), Game, R#watch.player),
+
   notify_player_state(R#watch.player, Game),
   Game#game{ observers = [R#watch.player|Obs] }.
 
@@ -688,6 +692,14 @@ draw_shared(Game, N) ->
     Shared = #notify_shared{ game = Game#game.gid, card = Card },
     Game2 = broadcast(Game1, Shared),
     draw_shared(Game2, N - 1).
+
+notify_shared([Card|T], Game, Player) ->
+  Shared = #notify_shared{ game = Game#game.gid, card = Card },
+  gen_server:cast(Player, Shared),
+  notify_shared(T, Game, Player);
+
+notify_shared([], _Game, _Player) ->
+  ok.
 
 inplay_plus(Game, SeatNum, Amount) 
   when is_integer(SeatNum) ->
