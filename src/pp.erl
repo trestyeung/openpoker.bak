@@ -184,6 +184,8 @@ limit() ->
     record(limit, {
              limit_type(),
              price(),
+             price(),
+             price(),
              price()
             }).
 
@@ -639,8 +641,10 @@ notify_game_detail() ->
       optional(sb()),
       optional(bb()),
       stage(),
-      amount(),
-      amount()
+      price(),
+      price(),
+      price(),
+      price()
     }).
 
 tourney_query() ->

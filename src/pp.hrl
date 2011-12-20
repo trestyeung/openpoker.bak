@@ -398,7 +398,9 @@
     bblind,
     stage,
     high,
-    low
+    low,
+    min,
+    max
   }).
 
 

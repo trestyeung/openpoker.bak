@@ -26,6 +26,8 @@ start([GID, R = #start_game{}]) ->
               end,
       low = (R#start_game.limit)#limit.low, 
       high = (R#start_game.limit)#limit.high, 
+      min = (R#start_game.limit)#limit.min,
+      max = (R#start_game.limit)#limit.max,
       deck = deck:new(R#start_game.rigged_deck),
       pot = pot:new(),
       seats = g:create_seats(R#start_game.seat_count),

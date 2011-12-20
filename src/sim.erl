@@ -44,7 +44,7 @@ login() ->
   ok.
 
 join(PID) ->
-  gen_server:cast(p(PID), #join{game=g(1), seat=0, amount=99999.0}).
+  gen_server:cast(p(PID), #join{game=g(1), seat=0, amount=9.0}).
 
 call(PID, Raise) ->
   gen_server:cast(p(PID), #raise{game=g(1), raise=Raise}).

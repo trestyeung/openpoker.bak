@@ -68,7 +68,9 @@
 -record(limit, {
 					type,
 					low,
-					high
+					high,
+          min,
+          max
 				 }).
 
 %%% Query operator
