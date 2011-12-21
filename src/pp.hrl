@@ -393,14 +393,11 @@
     pot,
     players,
     seats,
-    button,
-    sblind,
-    bblind,
     stage,
-    high,
-    low,
     min,
-    max
+    max,
+    low,
+    high
   }).
 
 

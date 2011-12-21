@@ -253,20 +253,21 @@ watch(Game, Ctx, R) ->
   Players = get_seats(Game, ?PS_ANY),
   Obs = Game#game.observers,
 
+  Limit = #limit{type = Game#game.limit, min = Game#game.min, max = Game#game.max, high = Game#game.high, low = Game#game.low},
+
   Detail = #notify_game_detail{
     game = Game#game.gid, 
     pot = pot:total(Game#game.pot),
     players = length(Players),
     seats = size(Game#game.seats),
-    button = Ctx#texas.b,
-    sblind = Ctx#texas.sb,
-    bblind = Ctx#texas.bb,
     stage = Ctx#texas.stage,
-    high = Game#game.high,
-    low = Game#game.low,
     min = Game#game.min,
-    max = Game#game.max
+    max = Game#game.max,
+    low = Game#game.low,
+    high = Game#game.high
   },
+
+  ?LOG([{game_detail, Detail}]),
 
   Detail1 = case Detail#notify_game_detail.stage of
     undefined ->
@@ -281,6 +282,7 @@ watch(Game, Ctx, R) ->
   notify_shared(lists:reverse(Game#game.board), Game, R#watch.player),
 
   notify_player_state(R#watch.player, Game),
+  ?LOG([{test_debug1, Detail1, Limit}]),
   Game#game{ observers = [R#watch.player|Obs] }.
 
 get_empty_seat(Game) ->
