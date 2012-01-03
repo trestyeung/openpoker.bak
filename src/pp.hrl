@@ -348,6 +348,14 @@
 					call
 				 }).
 
+-define(CMD_NOTIFY_BLIND, 85).
+
+-record(notify_blind, {
+					game,
+					player,
+					call
+				 }).
+
 -define(CMD_NOTIFY_CHAT, 43).
 
 -record(notify_chat, {

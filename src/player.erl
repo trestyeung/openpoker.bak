@@ -256,6 +256,7 @@ is_record(R, notify_shared);
 is_record(R, notify_leave);
 is_record(R, notify_leave);
 is_record(R, notify_raise);
+is_record(R, notify_blind);
 is_record(R, notify_win);
 is_record(R, notify_hand);
 is_record(R, show_cards);

@@ -267,8 +267,6 @@ watch(Game, Ctx, R) ->
     high = Game#game.high
   },
 
-  ?LOG([{game_detail, Detail}]),
-
   Detail1 = case Detail#notify_game_detail.stage of
     undefined ->
       Detail#notify_game_detail{stage = ?GS_CANCEL};
@@ -282,7 +280,6 @@ watch(Game, Ctx, R) ->
   notify_shared(lists:reverse(Game#game.board), Game, R#watch.player),
 
   notify_player_state(R#watch.player, Game),
-  ?LOG([{test_debug1, Detail1, Limit}]),
   Game#game{ observers = [R#watch.player|Obs] }.
 
 get_empty_seat(Game) ->
@@ -306,7 +303,6 @@ join(Game, R) when R#join.seat == 0 ->
   AutoEmptySeat = get_empty_seat(Game),
   case AutoEmptySeat of
     0 ->
-      ?LOG([{not_empty_seat}]),
       Game;
     _ ->
       join(Game, R#join {seat = AutoEmptySeat})
@@ -765,7 +761,6 @@ rank_hands(Game, Seats) ->
                  lists:map(F2, Acc)
          end,
     Hands1 = lists:foldl(F1, Hands, Cards), %% 将公共牌派发到每一个手牌当中
-    ?LOG([{hands, Hands1}]),
     F2 = fun(Hand) -> 
         hand:rank(Hand) 
     end, %% 对所有的手牌进行排名并返回

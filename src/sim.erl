@@ -17,7 +17,7 @@ init() ->
   schema:install(),
 
   player:create("1010", "pass", "5b635bee55S3", "5Lit5Zu9", 100000), %% Jack
-  player:create("1020", "pass", "6buRSkFDSw==", "6aaZ5riv", 100000), %% Sam 
+  player:create("1020", "pass", "6ICB6Yyi", "6aaZ5riv", 100000), %% Sam 
   player:create("1030", "pass", "6buRSkFDSw==", "6aaZ5riv", 100000), %% Sam 
   player:update_photo(1, <<"def_face_1">>),
   player:update_photo(2, <<"def_face_2">>),
@@ -27,15 +27,19 @@ init() ->
   timer:sleep(2000),
   login(),
   timer:sleep(2000),
-  join(2),
-  timer:sleep(30000),
-  join(3),
+  join(2, 100),
+  timer:sleep(2000),
+  join(3, 200),
   ok.
 
 login() ->
-  login:login(<<"1010">>, <<"pass">>, spawn(?MODULE, player_loop, [1])),
-  login:login(<<"1020">>, <<"pass">>, spawn(?MODULE, player_loop, [2])),
-  login:login(<<"1030">>, <<"pass">>, spawn(?MODULE, player_loop, [3])),
+  register(p1, spawn(?MODULE, player_loop, [1])),
+  register(p2, spawn(?MODULE, player_loop, [2])),
+  register(p3, spawn(?MODULE, player_loop, [3])),
+
+  login:login(<<"1010">>, <<"pass">>, whereis(p1)),
+  login:login(<<"1020">>, <<"pass">>, whereis(p2)),
+  login:login(<<"1030">>, <<"pass">>, whereis(p3)),
 
   gen_server:cast(p(1), #player_query{player=p(1)}),
   gen_server:cast(p(2), #player_query{player=p(2)}),
@@ -46,26 +50,50 @@ login() ->
 join(PID) ->
   gen_server:cast(p(PID), #join{game=g(1), seat=0, amount=1000.0}).
 
+join(PID, Amount) ->
+  gen_server:cast(p(PID), #join{game=g(1), seat=0, amount=Amount}).
+
 call(PID, Raise) ->
   gen_server:cast(p(PID), #raise{game=g(1), raise=Raise}).
 
-player_loop(PID) ->
-  receive
-    {packet, {notify_cancel_game, _}} ->
-      player_loop(PID);
-    {packet,{bet_req, _GID, Call, Min, _Max}} ->
-      timer:sleep(4000),
-      %io:format("BET_REQ ~p [Call: ~p Min: ~p] ~n", [PID, Call, Min]),
-      if 
-        Call /= 0.0 -> call(PID, 0.0);
-        true -> call(PID, Min)
-      end,
+fold(PID) ->
+  gen_server:cast(p(PID), #fold{game=g(1)}).
 
-      player_loop(PID);
+player_loop(2) ->
+  receive
+    {packet, {bet_req, _GID, Call, Min, Max}} ->
+      io:format("BET_REQ ~p [Raise: ~p - ~p Call: ~p] ~n", [2, Min, Max, Call]);
+    {call, Amount} ->
+      call(2, Amount);
+    {fold} ->
+      fold(2);
     Msg ->
       %io:format("Flush [~p]: ~p~n", [PID, Msg]),
-      player_loop(PID)
-  end.
+      ok
+  end,
+  player_loop(2);
+  
+player_loop(PID) ->
+  receive
+    {packet, {notify_raise, _GID, Player, Raise, Call}} ->
+      io:format("NOTIFY_RAISE ~p [Raise: ~p Call ~p] ~n", [Player, Raise, Call]);
+    {packet, {bet_req, _GID, Call, Min, Max}} ->
+      io:format("BET_REQ ~p [Raise: ~p - ~p Call: ~p] ~n", [PID, Min, Max, Call]);
+    {packet, {game_stage, _GID, Stage}} ->
+      io:format("NEW_STAGE [~p] ~n", [Stage]);
+    {packet, {seat_state, _GID, _SN, _State, undefined, _Inplay, _Nick}} ->
+      ok;
+    {packet, {seat_state, _GID, _SN, State, Player, Inplay, _Nick}} ->
+      io:format("SEAT_STATE ~p [State: ~p Inplay: ~p] ~n", [Player, State, Inplay]);
+    {call, Amount} ->
+      call(PID, Amount);
+    {fold} ->
+      fold(PID);
+    Msg ->
+      %io:format("Flush [~p]: ~p~n", [PID, Msg]),
+      ok
+  end,
+  player_loop(PID).
 
 p(PID) ->
   [P] = db:read(tab_player, PID),

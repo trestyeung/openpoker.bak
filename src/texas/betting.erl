@@ -52,30 +52,36 @@ betting(Game, Ctx, #raise{ player = Player })
   when Ctx#texas.exp_player /= Player ->
     {continue, Game, Ctx};
 
-%%% Call
+%%% Call & All-In
 betting(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
   Game1 = g:cancel_timer(Game),
-  Amt = Ctx#texas.exp_amt,
+
   N = Ctx#texas.exp_seat,
+  Amt = Ctx#texas.exp_amt,
   Seat = g:get_seat(Game1, Ctx#texas.exp_seat),
   Inplay = Seat#seat.inplay,
-  if 
-    Amt > Inplay ->
-      betting(Game, Ctx, #fold{ player = Player });
+
+  Amt1 = case Amt >= Inplay of
     true ->
-      %% proper bet
-      Game2 = g:set_state(Game1, Player, ?PS_BET),
-      Game3 = g:add_bet(Game2, Player, Amt),
-      R1 = #notify_raise{ 
-        game = Game3#game.gid, 
-        player = Seat#seat.pid,
-        raise = 0.0,
-        call = Amt
-      },
-      Game4 = g:broadcast(Game3, R1),
-      Game5 = g:notify_state(Game4, N),
-      next_turn(Game5, Ctx, Ctx#texas.exp_seat)
-  end;
+      ?LOG([{allin, Inplay}]),
+      Inplay; % ALL-IN
+    _ ->
+      Amt
+  end,
+
+  %% proper bet
+  Game2 = g:set_state(Game1, Player, ?PS_BET),
+  Game3 = g:add_bet(Game2, Player, Amt1),
+
+  R1 = #notify_raise{ 
+    game = Game3#game.gid, 
+    player = Seat#seat.pid,
+    raise = 0.0,
+    call = Amt1
+  },
+  Game4 = g:broadcast(Game3, R1),
+  Game5 = g:notify_state(Game4, N),
+  next_turn(Game5, Ctx, Ctx#texas.exp_seat);
 
 %%% Raise
 betting(Game, Ctx, #raise{ player = Player, raise = Amt }) ->
@@ -87,6 +93,7 @@ betting(Game, Ctx, #raise{ player = Player, raise = Amt }) ->
   Seat = g:get_seat(Game, Ctx#texas.exp_seat),
   Inplay = Seat#seat.inplay,
   RC = Game1#game.raise_count,
+
   if 
     (Amt > Inplay) or 
     (Amt > Max) or

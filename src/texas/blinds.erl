@@ -8,7 +8,6 @@ start(Game, Ctx, []) ->
 
 start(Game, Ctx, [Type]) ->
   {Small, Big} = (Game#game.limit):blinds(Game#game.low, Game#game.high),
-  ?LOG([{small, Small, big, Big, type, Type}]),
 
   Ctx1 = Ctx#texas{
     sb_amt = Small, bb_amt = Big, sb_bet = 0.0,
@@ -26,8 +25,6 @@ start(Game, Ctx, [Type]) ->
   L = length(AllPlayers),
   HeadsUp = (L == 2), %% 除庄家外只有一个玩家
 
-  ?LOG([{button, Button, all_players, L, AllPlayers}]),
-
   if
     L < 2 ->
       {goto, top, Game1, Ctx1};
@@ -35,8 +32,6 @@ start(Game, Ctx, [Type]) ->
       %% 一对一时特殊规则生效
       %% 庄家下小盲注，对家下大盲注
       %% 首次行动由庄家先叫，之后每次都为对家先叫
-      ?LOG([{heads_up, {button, Button}, {sb, Button}}]),
-
       Ctx2 = Ctx1#texas{ b = Button, headsup = true },
       ask_for_blind(Game1, Ctx2, Button, Ctx2#texas.sb_amt, small_blind);
     true ->
@@ -47,7 +42,6 @@ start(Game, Ctx, [Type]) ->
 %% small blind state
 small_blind(Game, Ctx, #raise{ player = Player }) 
   when Ctx#texas.exp_player /= Player ->
-    ?LOG([{small_blind, {not_our_player}}]),
     {continue, Game, Ctx};
 
 small_blind(Game, Ctx, R = #raise{ raise = Raise }) when Raise == 0.0 ->
@@ -68,7 +62,6 @@ small_blind(Game, Ctx, R) when
     {skip, Game, Ctx};
 
 small_blind(Game, Ctx, Event) ->
-  ?LOG([{small_blind, unknown_event, Event}]),
   {continue, Game, Ctx}.
 
 %%% big blind
@@ -94,7 +87,6 @@ big_blind(Game, Ctx, R = #watch{}) ->
   watch(Game, Ctx, R);
 
 big_blind(Game, Ctx, Event) ->
-  ?LOG([{big_blind, unknown_event, Event}]),
   {continue, Game, Ctx}.
 
 %%
@@ -104,11 +96,9 @@ advance_button(Game, Ctx) ->
   case Ctx#texas.b of
     none ->
       %% 新的牌局开始时庄家自动选择
-      ?LOG([{advance_button, new}]),
       AllPlayers = g:get_seats(Game, ?PS_PLAY),
       lists:last(AllPlayers);
     _ ->
-      ?LOG([{advance_button, next}]),
       Players = g:get_seats(Game, Ctx#texas.b, ?PS_PLAY),
       hd(Players)
   end.
@@ -139,11 +129,10 @@ post_sb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
   %% 为玩家下小盲注
   Ctx1 = Ctx#texas{ sb = N, sb_bet = Amt },
   Game1 = g:add_bet(Game, Player, Amt),
-  Game2 = g:broadcast(Game1, #notify_raise { 
+  Game2 = g:broadcast(Game1, #notify_blind { 
       game = Game1#game.gid, 
       player = Seat#seat.pid,
-      call = Amt,
-      raise = 0.0
+      call = Amt
     }),
 
   Game3 = g:notify_state(Game2, N),
@@ -166,16 +155,13 @@ post_bb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
 
   %% 为玩家下小盲注
   Game1 = g:add_bet(Game, Player, Amt),
-  Game2 = g:broadcast(Game1, #notify_raise{ 
+  Game2 = g:broadcast(Game1, #notify_blind { 
       game = Game1#game.gid, 
       player = Seat#seat.pid,
-      call = Amt,
-      raise = 0.0
+      call = Amt
     }
   ),
   Game3 = g:notify_state(Game2, N),
-
-  ?LOG([{stop_blind, {ctx, Ctx1}}]),
 
   %% 结束盲注
   {stop, Game3, Ctx1}.

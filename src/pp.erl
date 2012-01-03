@@ -316,6 +316,13 @@ notify_raise() ->
              call_amount()
             }).
 
+notify_blind() ->
+    record(notify_blind, {
+             game(),
+             player(),
+             call_amount()
+            }).
+
 fold() ->
     record(fold, {
              game(),
@@ -705,6 +712,9 @@ write(R) when is_record(R, raise) ->
 write(R) when is_record(R, notify_raise) ->
     [?CMD_NOTIFY_RAISE|pickle(notify_raise(), R)];
 
+write(R) when is_record(R, notify_blind) ->
+    [?CMD_NOTIFY_BLIND|pickle(notify_blind(), R)];
+
 write(R) when is_record(R, fold) ->
     [?CMD_FOLD|pickle(fold(), R)];
 
@@ -886,6 +896,9 @@ read(<<?CMD_RAISE, Bin/binary>>) ->
 
 read(<<?CMD_NOTIFY_RAISE, Bin/binary>>) ->
     unpickle(notify_raise(), Bin);
+
+read(<<?CMD_NOTIFY_BLIND, Bin/binary>>) ->
+    unpickle(notify_blind(), Bin);
 
 read(<<?CMD_FOLD, Bin/binary>>) ->
     unpickle(fold(), Bin);
