@@ -1,7 +1,7 @@
 -module(game).
 -behaviour(exch).
 
--export([id/0, start/1, stop/1, dispatch/2, call/2]).
+-export([id/0, start/1, stop/1, dispatch/2, call/2, cast/2]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -64,27 +64,41 @@ dispatch(R, Game) ->
   ?LOG([{unknown_dispatch, {msg, R}, {game, Game}}]).
     
 call('ID', Game) ->
-    Game#game.gid;
+  Game#game.gid;
 
 call('REQUIRED', Game) ->
-    Game#game.required_player_count;
+  Game#game.required_player_count;
 
 call('JOINED', Game) ->
-    Seats = g:get_seats(Game, ?PS_ANY),
-    length(Seats);
+  Seats = g:get_seats(Game, ?PS_ANY),
+  length(Seats);
 
 call('WAITING', _) ->
-    0;
+  0;
 
 call('SEAT QUERY', Game) ->
-    g:seat_query(Game);
+  g:seat_query(Game);
 
 call({'INPLAY', Player}, Game) ->
-    {_, Seat} = g:get_seat(Game, Player),
-    Seat#seat.inplay;
+  {_, Seat} = g:get_seat(Game, Player),
+  Seat#seat.inplay;
 
 call('DEBUG', Game) ->
   Game.
+
+cast({timeout, _, {out, SeatNum, PID}}, Game) ->
+  Seat = element(SeatNum, Game#game.seats),
+  case Seat#seat.pid of
+    PID ->
+      GID = global:whereis_name({?MODULE, Game#game.gid}),
+      gen_server:cast(Seat#seat.player, #leave{ game = GID });
+    _ ->
+      ok
+  end,
+  Game;
+
+cast(_, _) ->
+  skip.
 
 %%%
 %%% Utility
@@ -115,4 +129,3 @@ store_game_info(GID, R) ->
       required = R#start_game.required
      },
     ok = db:write(Game).
-

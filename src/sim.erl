@@ -26,10 +26,10 @@ init() ->
   server:start(Host, Port),
   timer:sleep(2000),
   login(),
-  timer:sleep(2000),
+  timer:sleep(1000),
   join(2, 100),
-  timer:sleep(2000),
-  join(3, 200),
+  timer:sleep(1000),
+  join(3, 100),
   ok.
 
 login() ->

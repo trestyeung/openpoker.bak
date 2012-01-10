@@ -32,8 +32,9 @@ behaviour_info(callbacks) ->
     [{id, 0}, 
      {start, 1}, 
      {stop, 1}, 
-     {call, 3},
-     {dispatch, 2}].
+     {dispatch, 2},
+     {call, 2},
+     {cast, 2}].
 
 %%%
 %%% API
@@ -109,12 +110,18 @@ process_call(Event, Exch) ->
     Cbk:call(Event, Exch#exch.data).
 
 process_cast(Event, Exch) ->
-    {Mod, _} = hd(Exch#exch.stack),
-    State = Exch#exch.state,
-    Data = Exch#exch.data,
-    Ctx = Exch#exch.ctx,
-    Result = Mod:State(Data, Ctx, Event),
-    advance(Exch, Event, Result).
+  {Mod, _} = hd(Exch#exch.stack),
+  State = Exch#exch.state,
+  Data = Exch#exch.data,
+  Ctx = Exch#exch.ctx,
+
+  case Cbk:cast(Event, Data) of
+    skip ->
+      Result = Mod:State(Data, Ctx, Event),
+      advance(Exch, Event, Result);
+    NewData ->
+      {noreply, Exch#exch{ data = NewData, ctx = Ctx }}
+  end.
 
 init(Exch = #exch{ stack = [{Mod, Params}|_] }, Event) ->
     Ctx = Exch#exch.ctx,
@@ -127,7 +134,6 @@ advance(Exch = #exch{}, _, {next, State, Data, Ctx}) ->
     {noreply, Exch#exch{ state = State, data = Data, ctx = Ctx }};
 
 advance(Exch = #exch{}, Event, {skip, Data, _}) ->
-    %% event not handled by the state machine
     {noreply, Exch#exch{ data = Cbk:dispatch(Event, Data) }};
 
 advance(Exch = #exch{ stack = [_] }, _, {stop, Data, Ctx}) ->

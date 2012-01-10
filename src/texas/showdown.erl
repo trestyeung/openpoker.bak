@@ -111,9 +111,11 @@ check_inplay([], _Big, Game) ->
 check_inplay([SeatNum|T], Big, Game) -> 
   Seat = element(SeatNum, Game#game.seats),
   Inplay = Seat#seat.inplay,
+  PID = Seat#seat.pid,
   Game1 = if
     Inplay =< Big ->
       ?LOG([{player_out, SeatNum, Big, Inplay}]),
+      erlang:start_timer(?PLAYER_OUT_TIMEOUT, self(), {out, SeatNum, PID}),
       g:set_state(Game, SeatNum, ?PS_OUT);
     true ->
       Game

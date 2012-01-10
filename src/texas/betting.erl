@@ -140,6 +140,9 @@ betting(Game, Ctx, R = #fold{}) ->
       next_turn(Game2, Ctx, Ctx#texas.exp_seat)
   end;
 
+%betting(Game, Ctx, {timeout, _, {out, SN}}) ->
+  
+
 %% Timeout
 betting(Game, Ctx, {timeout, _, _}) ->
   Game1 = g:cancel_timer(Game),
