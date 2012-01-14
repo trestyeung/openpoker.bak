@@ -157,6 +157,7 @@ handle_cast(R, Data)
        is_record(R, muck);
        is_record(R, sit_out);
        is_record(R, come_back) ->
+    ?LOG([{cast_player}]),
     Game = element(2, R),
     R1 = if
              is_record(R, leave) ->
@@ -168,6 +169,7 @@ handle_cast(R, Data)
         true ->
             gen_server:cast(Game, R1);
         _ ->
+          ?LOG([{not_playing_this_game}]),
             oops
     end,
     {noreply, Data};
@@ -249,11 +251,11 @@ is_record(R, notify_start_game);
 is_record(R, notify_end_game);
 is_record(R, notify_cancel_game);
 is_record(R, notify_join);
+is_record(R, notify_unwatch);
 is_record(R, notify_draw);
 is_record(R, notify_actor);
 is_record(R, notify_private);
 is_record(R, notify_shared);
-is_record(R, notify_leave);
 is_record(R, notify_leave);
 is_record(R, notify_raise);
 is_record(R, notify_blind);

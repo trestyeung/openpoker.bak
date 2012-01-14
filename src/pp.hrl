@@ -183,6 +183,7 @@
 					min,
 					max
 				 }).
+
 -define(CMD_NOTIFY_ACTOR, 84).
 
 -record(notify_actor, {
@@ -354,6 +355,12 @@
 					game,
 					player,
 					call
+				 }).
+
+-define(CMD_NOTIFY_UNWATCH, 86).
+
+-record(notify_unwatch, {
+					game
 				 }).
 
 -define(CMD_NOTIFY_CHAT, 43).

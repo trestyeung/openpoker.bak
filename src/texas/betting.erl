@@ -150,11 +150,6 @@ betting(Game, Ctx, {timeout, _, _}) ->
   %Seat = Ctx#texas.exp_seat,
   betting(Game1, Ctx, #fold{ player = Player });
 
-%% Watch
-betting(Game, Ctx, R = #watch{}) ->
-  Game1 = g:watch(Game, Ctx, R),
-  {continue, Game1, Ctx};
-
 %% Join
 betting(Game, Ctx, R = #join{}) ->
   Game1 = g:join(Game, R#join{ state = ?PS_FOLD }),

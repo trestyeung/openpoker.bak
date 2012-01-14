@@ -115,12 +115,12 @@ process_cast(Event, Exch) ->
   Data = Exch#exch.data,
   Ctx = Exch#exch.ctx,
 
-  case Cbk:cast(Event, Data) of
+  case Cbk:cast(Event, Ctx, Data) of
     skip ->
       Result = Mod:State(Data, Ctx, Event),
       advance(Exch, Event, Result);
-    NewData ->
-      {noreply, Exch#exch{ data = NewData, ctx = Ctx }}
+    {NewGame, NewCtx}->
+      {noreply, Exch#exch{ data = NewGame, ctx = NewCtx }}
   end.
 
 init(Exch = #exch{ stack = [{Mod, Params}|_] }, Event) ->

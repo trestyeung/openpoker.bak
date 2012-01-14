@@ -35,10 +35,6 @@ wait_for_players(Game, Ctx, R = #leave{}) ->
   Game1 = g:leave(Game, R#leave { state = ?PS_ANY }),
   {continue, Game1, Ctx};
 
-wait_for_players(Game, Ctx, R = #watch{}) ->
-  Game1 = g:watch(Game, Ctx, R),
-  {continue, Game1, Ctx};
-
 wait_for_players(Game, Ctx, _R = #raise{}) ->
   {continue, Game, Ctx};
 

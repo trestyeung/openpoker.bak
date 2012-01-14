@@ -628,6 +628,11 @@ notify_tourney_leave() ->
              player()
             }).
 
+notify_unwatch() ->
+    record(notify_unwatch, {
+             game()
+            }).
+
 notify_seat_detail() ->
     record(notify_seat_detail, {
              game(), 
@@ -714,6 +719,9 @@ write(R) when is_record(R, notify_raise) ->
 
 write(R) when is_record(R, notify_blind) ->
     [?CMD_NOTIFY_BLIND|pickle(notify_blind(), R)];
+
+write(R) when is_record(R, notify_unwatch) ->
+    [?CMD_NOTIFY_UNWATCH|pickle(notify_unwatch(), R)];
 
 write(R) when is_record(R, fold) ->
     [?CMD_FOLD|pickle(fold(), R)];
@@ -899,6 +907,9 @@ read(<<?CMD_NOTIFY_RAISE, Bin/binary>>) ->
 
 read(<<?CMD_NOTIFY_BLIND, Bin/binary>>) ->
     unpickle(notify_blind(), Bin);
+
+read(<<?CMD_NOTIFY_UNWATCH, Bin/binary>>) ->
+    unpickle(notify_unwatch(), Bin);
 
 read(<<?CMD_FOLD, Bin/binary>>) ->
     unpickle(fold(), Bin);

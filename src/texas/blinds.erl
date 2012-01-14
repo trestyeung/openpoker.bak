@@ -53,9 +53,6 @@ small_blind(Game, Ctx, R = #join{}) ->
 small_blind(Game, Ctx, R = #leave{}) ->
   leave(Game, Ctx, R, small_blind);
 
-small_blind(Game, Ctx, R = #watch{}) ->
-  watch(Game, Ctx, R);
-
 small_blind(Game, Ctx, R) when 
   is_record(R, sit_out); 
   is_record(R, come_back) ->
@@ -82,9 +79,6 @@ big_blind(Game, Ctx, R = #join{}) ->
 
 big_blind(Game, Ctx, R = #leave{}) ->
   leave(Game, Ctx, R, big_blind);
-
-big_blind(Game, Ctx, R = #watch{}) ->
-  watch(Game, Ctx, R);
 
 big_blind(Game, Ctx, Event) ->
   {continue, Game, Ctx}.
@@ -165,10 +159,6 @@ post_bb(Game, Ctx, #raise{ player = Player, raise = 0.0 }) ->
 
   %% 结束盲注
   {stop, Game3, Ctx1}.
-
-watch(Game, Ctx, R) -> 
-  Game1 = g:watch(Game, Ctx, R),
-  {continue, Game1, Ctx}.
 
 join(Game, Ctx, R) ->
   join(Game, Ctx, R, ?PS_MAKEUP_BB).

@@ -1,7 +1,7 @@
 -module(game).
 -behaviour(exch).
 
--export([id/0, start/1, stop/1, dispatch/2, call/2, cast/2]).
+-export([id/0, start/1, stop/1, dispatch/2, call/2, cast/3]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -47,10 +47,6 @@ stop(Game)
 
 %%% Watch the game without joining
 
-dispatch(R = #unwatch{}, Game) ->
-    Obs = Game#game.observers,
-    Game#game{ observers = lists:delete(R#unwatch.player, Obs) };
-
 dispatch(R = #sit_out{}, Game) ->
     change_state(Game, R#sit_out.player, ?PS_SIT_OUT);
 
@@ -86,7 +82,7 @@ call({'INPLAY', Player}, Game) ->
 call('DEBUG', Game) ->
   Game.
 
-cast({timeout, _, {out, SeatNum, PID}}, Game) ->
+cast({timeout, _, {out, SeatNum, PID}}, Ctx, Game) ->
   Seat = element(SeatNum, Game#game.seats),
   case Seat#seat.pid of
     PID ->
@@ -95,9 +91,22 @@ cast({timeout, _, {out, SeatNum, PID}}, Game) ->
     _ ->
       ok
   end,
-  Game;
+  {Game, Ctx};
 
-cast(_, _) ->
+cast(R = #leave{}, Ctx, Game) ->
+  Game1 = g:leave(Game, R),
+  {Game1, Ctx};
+
+cast(R = #watch{}, Ctx, Game) ->
+  Game1 = g:watch(Game, Ctx, R),
+  {Game1, Ctx};
+
+cast(R = #unwatch{}, Ctx, Game) ->
+  ?LOG([{game_unwatch, R}]),
+  Game1 = g:unwatch(Game, R),
+  {Game1, Ctx};
+
+cast(_, _, _) ->
   skip.
 
 %%%

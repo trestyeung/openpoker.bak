@@ -15,7 +15,7 @@
          add_bet/3, new_stage/1, reset_player_state/3,
          pot_size/1, draw/3, draw_shared/2, 
          inplay_plus/3, show_cards/2, rank_hands/1, 
-         pots/1, make/1, make/3, watch/3,
+         pots/1, make/1, make/3, watch/3, unwatch/2,
          notify_state/2
         ]).
 
@@ -249,11 +249,22 @@ reset_hands(Seats, Count) ->
                                        }),
     reset_hands(Seats1, Count - 1).
 
+unwatch(Game, R) ->
+  Obs = lists:delete(R#unwatch.player, Game#game.observers),
+  gen_server:cast(R#unwatch.player, #notify_unwatch{ game = Game#game.gid }),
+  Game#game{ observers = Obs }.
+
 watch(Game, Ctx, R) ->
   Players = get_seats(Game, ?PS_ANY),
   Obs = Game#game.observers,
 
-  Limit = #limit{type = Game#game.limit, min = Game#game.min, max = Game#game.max, high = Game#game.high, low = Game#game.low},
+  %Limit = #limit {
+    %type = Game#game.limit, 
+    %min = Game#game.min, 
+    %max = Game#game.max, 
+    %high = Game#game.high, 
+    %low = Game#game.low
+  %},
 
   Detail = #notify_game_detail{
     game = Game#game.gid, 
@@ -391,6 +402,7 @@ do_join(Game, R, State) ->
      }.
 
 leave(Game, R) ->
+  ?LOG([{g_leave, R}]),
     XRef = Game#game.xref,
     Seats = Game#game.seats,
     Player = R#leave.player,
@@ -398,6 +410,7 @@ leave(Game, R) ->
     GID = Game#game.gid,
     if
         OurPlayer ->
+          ?LOG([{ourplayer, leave, R}]),
             SeatNum = gb_trees:get(Player, XRef),
             Seat = element(SeatNum, Seats),
             PID = Seat#seat.pid,
@@ -439,7 +452,8 @@ leave(Game, R) ->
             end;
         %% not playing here
         true ->
-            Game
+          ?LOG([{not_ourplayer, leave, R}]),
+          Game
     end.
 
 kick(Game) ->
@@ -789,7 +803,7 @@ find(GameType, LimitType,
      ExpOp, Expected, 
      JoinOp, Joined,
      WaitOp, Waiting) ->
-    F = fun() -> find_1(GameType, LimitType) end,
+    F = fun() -> find(GameType, LimitType) end,
     {atomic, L} = mnesia:transaction(F),
     F1 = fun(R = #game_info{}) ->
                  query_op(R#game_info.required, ExpOp, Expected) 
@@ -798,7 +812,7 @@ find(GameType, LimitType,
          end,
     {atomic, lists:filter(F1, L)}.
 
-find_1(GameType, LimitType) ->
+find(GameType, LimitType) ->
     Q = qlc:q([G || G <- mnesia:table(tab_game_xref),
                     G#tab_game_xref.type == GameType,
                     (G#tab_game_xref.limit)#limit.type == LimitType]),
@@ -895,6 +909,7 @@ core_texas_mods() ->
      {betting, [?MAX_RAISES, ?GS_TURN]}, 
      %% show 1 more shared card
      {deal_cards, [1, shared]}, 
+
      {rank, []}, 
      %% river
      {betting, [?MAX_RAISES, ?GS_RIVER]}, 
