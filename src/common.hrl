@@ -137,6 +137,7 @@
 
 -define(PS_CAN_LEAVE,
 				?PS_FOLD bor
+				?PS_OUT bor
 				?PS_WAIT_BB bor
 				?PS_SIT_OUT bor
 				?PS_MAKEUP_BB).

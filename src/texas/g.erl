@@ -97,17 +97,17 @@ is_empty(Game) ->
     (Game#game.observers == []) and (Seats == []).
 
 notify_start_game(Game) ->
-    Msg = lang:msg(?GAME_STARTING),
+    %Msg = lang:msg(?GAME_STARTING),
     Game1 = reset(Game),
     GID = Game1#game.gid,
-    Game2 = broadcast(Game1, #chat{ game = GID, message = Msg }),
-    broadcast(Game2, #notify_start_game{ game = GID }).
+    %Game2 = broadcast(Game1, #chat{ game = GID, message = Msg }),
+    broadcast(Game1, #notify_start_game{ game = GID }).
 
 notify_cancel_game(Game) ->
-    Msg = lang:msg(?GAME_CANCELLED),
+    %Msg = lang:msg(?GAME_CANCELLED),
     GID = Game#game.gid,
-    Game1 = broadcast(Game, #chat{ game = GID, message = Msg }),
-    broadcast(Game1, #notify_cancel_game{ game = GID }).
+    %Game1 = broadcast(Game, #chat{ game = GID, message = Msg }),
+    broadcast(Game, #notify_cancel_game{ game = GID }).
 
 %%% Broadcast
 
@@ -427,7 +427,9 @@ leave(Game, R) ->
             proc = self()
           },
           %% notify players
+          ?LOG([{notify_player, R1}]),
           Game1 = broadcast(Game, R1),
+          ?LOG([{notify_player_end, R1}]),
           XRef1 = gb_trees:delete(Player, XRef),
           Game2 = Game1#game {
             xref = XRef1,
@@ -443,7 +445,10 @@ leave(Game, R) ->
           Inplay = Seat#seat.inplay,
           db:update_balance(tab_balance, PID, Inplay),
           ok = db:delete(tab_inplay, {GID, PID}),
-          watch(#watch{player = PID}, Game2);
+          ?LOG([{leave_auto_watch}]),
+          Game3 = watch(#watch{player = Player}, Game2),
+          ?LOG([{leave_auto_watch_end}]),
+          Game3;
         %% cannot leave now, use auto-play
         true ->
           ?LOG([{auto_play}]),
