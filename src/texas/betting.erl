@@ -93,6 +93,7 @@ betting(Game, Ctx, #raise{ player = Player, raise = Amt }) ->
   Seat = g:get_seat(Game, Ctx#texas.exp_seat),
   Inplay = Seat#seat.inplay,
   RC = Game1#game.raise_count,
+  ?LOG([{betting, {amount, Amt}, {inplay, Inplay, call, Call}}]),
 
   if 
     (Amt > Inplay) or 

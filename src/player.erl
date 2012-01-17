@@ -136,17 +136,17 @@ handle_cast(#logout{}, Data) ->
 
 handle_cast(R = #join{ game = Game }, Data) ->
   R1 = R#join{ player = self(), pid = Data#pdata.pid },
-  Data1 = case gb_trees:is_defined(Game, Data#pdata.watching) of
+  case gb_trees:is_defined(Game, Data#pdata.watching) of
     true ->
       gen_server:cast(Game, R1),
-      Data;
+      {noreply, Data};
     _ ->
+      %% auto watch
+      ?LOG([{auto_watch}]),
       gen_server:cast(Game, #watch{ game = R#join.game, player = self() }),
       Watching = gb_trees:enter(Game, 1, Data#pdata.watching),
-      gen_server:cast(Game, R1),
-      Data#pdata{ watching = Watching }
-  end,
-  {noreply, Data1};
+      handle_cast(R#join{ game = Game }, Data#pdata{ watching = Watching })
+  end;
 
 handle_cast(R, Data) 
   when is_record(R, wait_bb);
@@ -157,7 +157,6 @@ handle_cast(R, Data)
        is_record(R, muck);
        is_record(R, sit_out);
        is_record(R, come_back) ->
-    ?LOG([{cast_player}]),
     Game = element(2, R),
     R1 = if
              is_record(R, leave) ->
@@ -169,7 +168,7 @@ handle_cast(R, Data)
         true ->
             gen_server:cast(Game, R1);
         _ ->
-          ?LOG([{not_playing_this_game}]),
+          ?LOG([{not_playing_this_game, R1}]),
             oops
     end,
     {noreply, Data};

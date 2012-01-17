@@ -256,7 +256,6 @@ unwatch(Game, R) ->
 
 watch(Game, Ctx, R) ->
   Players = get_seats(Game, ?PS_ANY),
-  Obs = Game#game.observers,
 
   %Limit = #limit {
     %type = Game#game.limit, 
@@ -291,6 +290,10 @@ watch(Game, Ctx, R) ->
   notify_shared(lists:reverse(Game#game.board), Game, R#watch.player),
 
   notify_player_state(R#watch.player, Game),
+  watch(R, Game).
+
+watch(R, Game) ->
+  Obs = Game#game.observers,
   Game#game{ observers = [R#watch.player|Obs] }.
 
 get_empty_seat(Game) ->
@@ -403,58 +406,59 @@ do_join(Game, R, State) ->
 
 leave(Game, R) ->
   ?LOG([{g_leave, R}]),
-    XRef = Game#game.xref,
-    Seats = Game#game.seats,
-    Player = R#leave.player,
-    OurPlayer = gb_trees:is_defined(Player, XRef),
-    GID = Game#game.gid,
-    if
-        OurPlayer ->
-          ?LOG([{ourplayer, leave, R}]),
-            SeatNum = gb_trees:get(Player, XRef),
-            Seat = element(SeatNum, Seats),
-            PID = Seat#seat.pid,
-            if 
-                %% leave unless playing
-                Seat#seat.state band R#leave.state > 0 ->
-                    %% tell player
-                    R1 = #notify_leave{ 
-                      game = GID, 
-                      player = PID,
-                      proc = self()
-                     },
-                    %% notify players
-                    Game1 = broadcast(Game, R1),
-                    XRef1 = gb_trees:delete(Player, XRef),
-                    Game2 = Game1#game {
-                              xref = XRef1,
-                              seats = setelement(SeatNum,
-                                                 Seats,
-                                                 Seat#seat {
-                                                   player = none,
-                                                   state = ?PS_EMPTY,
-                                                   muck = false
-                                                  })
-                             },
-                    %% update inplay balance
-                    Inplay = Seat#seat.inplay,
-                    db:update_balance(tab_balance, PID, Inplay),
-                    ok = db:delete(tab_inplay, {GID, PID}),
-                    Game2;
-                %% cannot leave now, use auto-play
-                true ->
-                    Fold = #fold{ game = self(), player = Player },
-                    Leave = #leave{ game = self(), player = Player },
-                    Seat1 = Seat#seat{ cmd_que = [[Fold, Leave]] },
-                    Game#game {
-                      seats = setelement(SeatNum, Seats, Seat1)
-                     }
-            end;
-        %% not playing here
+  XRef = Game#game.xref,
+  Seats = Game#game.seats,
+  Player = R#leave.player,
+  OurPlayer = gb_trees:is_defined(Player, XRef),
+  GID = Game#game.gid,
+  if
+    OurPlayer ->
+      SeatNum = gb_trees:get(Player, XRef),
+      Seat = element(SeatNum, Seats),
+      PID = Seat#seat.pid,
+      if 
+        %% leave unless playing
+        Seat#seat.state band R#leave.state > 0 ->
+          ?LOG([{can_leave}]),
+          %% tell player
+          R1 = #notify_leave{ 
+            game = GID, 
+            player = PID,
+            proc = self()
+          },
+          %% notify players
+          Game1 = broadcast(Game, R1),
+          XRef1 = gb_trees:delete(Player, XRef),
+          Game2 = Game1#game {
+            xref = XRef1,
+            seats = setelement(SeatNum,
+              Seats,
+              Seat#seat {
+                player = none,
+                state = ?PS_EMPTY,
+                muck = false
+              })
+          },
+          %% update inplay balance
+          Inplay = Seat#seat.inplay,
+          db:update_balance(tab_balance, PID, Inplay),
+          ok = db:delete(tab_inplay, {GID, PID}),
+          watch(#watch{player = PID}, Game2);
+        %% cannot leave now, use auto-play
         true ->
-          ?LOG([{not_ourplayer, leave, R}]),
-          Game
-    end.
+          ?LOG([{auto_play}]),
+          Fold = #fold{ game = self(), player = Player },
+          Leave = #leave{ game = self(), player = Player },
+          Seat1 = Seat#seat{ cmd_que = [[Fold, Leave]] },
+          Game#game {
+            seats = setelement(SeatNum, Seats, Seat1)
+          }
+      end;
+    %% not playing here
+    true ->
+      ?LOG([{not_ourplayer, leave, R}]),
+      Game
+  end.
 
 kick(Game) ->
     Seats = Game#game.seats,
@@ -626,6 +630,7 @@ add_bet(Game, SeatNum, Amount) ->
     Seat = element(SeatNum, Game#game.seats),
     Player = Seat#seat.player,
     Inplay = Seat#seat.inplay,
+    ?LOG([{add_bet, {amount, Amount}, {inplay, Inplay}}]),
     if
         Amount > Inplay->
             set_state(Game, SeatNum, ?PS_OUT);

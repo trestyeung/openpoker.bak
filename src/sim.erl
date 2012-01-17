@@ -27,7 +27,7 @@ init() ->
   timer:sleep(2000),
   login(),
   timer:sleep(1000),
-  join(2, 100),
+  join(2, 500),
   timer:sleep(1000),
   join(3, 100),
   ok.
@@ -59,7 +59,10 @@ call(PID, Raise) ->
 fold(PID) ->
   gen_server:cast(p(PID), #fold{game=g(1)}).
 
-player_loop(PID) when PID == 2; PID == 3 ->
+leave(PID) ->
+  gen_server:cast(p(PID), #leave{game=g(1)}).
+
+player_loop(PID) when PID == 2 ->
   receive
     {packet, {bet_req, _GID, Call, Min, Max}} ->
       io:format("BET_REQ ~p [Raise: ~p - ~p Call: ~p] ~n", [PID, Min, Max, Call]);
@@ -67,7 +70,9 @@ player_loop(PID) when PID == 2; PID == 3 ->
       call(PID, Amount);
     {fold} ->
       fold(PID);
-    Msg ->
+    {leave} ->
+      leave(PID);
+    _Msg ->
       ok
   end,
   player_loop(PID);
@@ -88,7 +93,9 @@ player_loop(PID) ->
       call(PID, Amount);
     {fold} ->
       fold(PID);
-    Msg ->
+    {leave} ->
+      leave(PID);
+    _Msg ->
       %io:format("Flush [~p]: ~p~n", [PID, Msg]),
       ok
   end,

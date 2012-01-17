@@ -112,7 +112,6 @@ handle_info(Info, Data) ->
                              ]),
     {noreply, Data}.
 
-
 code_change(_OldVsn, Data, _Extra) ->
     {ok, Data}.
 
