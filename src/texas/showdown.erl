@@ -49,7 +49,7 @@ notify_winners(Game, []) ->
 notify_winners(Game, [{H, Amount}|T]) ->
     Player = H#hand.player,
     PID = H#hand.pid,
-    Cost = trunc(Amount * 0.05),
+    Cost = trunc(Amount * 0.02),
     Game1 = g:inplay_plus(Game, Player, Amount - Cost),
     Event = #notify_win{ 
       game = Game1#game.gid, 

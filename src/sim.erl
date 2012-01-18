@@ -28,14 +28,6 @@ init() ->
   login(),
   timer:sleep(1000),
   join(2, 500),
-  timer:sleep(1000),
-  join(3, 100),
-  timer:sleep(4000),
-  p3 ! {call, 0.0},
-  timer:sleep(1000),
-  p2 ! {call, 200.0},
-  timer:sleep(1000),
-  p3 ! {call, 0.0},
   ok.
 
 login() ->

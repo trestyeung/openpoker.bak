@@ -6,5 +6,3 @@ cd ebin
 rm -rf Mnesia*
 erl -sname test -run sim init
 cd ..
-
-
